@@ -141,7 +141,7 @@ body {
 
 /* ─── STATS ─── */
 .stats-grid {
-  display: grid; grid-template-columns: repeat(4, 1fr);
+  display: grid; grid-template-columns: repeat(3, 1fr);
   gap: 14px; margin-bottom: 24px;
 }
 .stat-card {
@@ -460,11 +460,6 @@ tbody td { padding: 13px 16px; font-size: 13px; font-weight: 600; color: var(--t
           <div class="stat-value" id="cnt-cf">—</div>
           <div class="stat-sublabel">prontos para baixar</div>
         </div>
-        <div class="stat-card bx">
-          <div class="stat-label">Baixados</div>
-          <div class="stat-value" id="cnt-bx">—</div>
-          <div class="stat-sublabel">total no período</div>
-        </div>
       </div>
 
       <!-- FILTERS -->
@@ -496,6 +491,7 @@ tbody td { padding: 13px 16px; font-size: 13px; font-weight: 600; color: var(--t
                 <th>Frete</th>
                 <th>Status</th>
                 <th>Dt. Pgto</th>
+                <th>Enviado</th>
                 <th>Vendedor</th>
                 <th></th>
               </tr>
@@ -594,12 +590,12 @@ tbody td { padding: 13px 16px; font-size: 13px; font-weight: 600; color: var(--t
   </div>
 </div>
 
-<!-- MODAL STATUS -->
+<!-- MODAL EDITAR PEDIDO (status + enviado + data pgto + edição de valores) -->
 <div class="modal-overlay" id="modal-status" style="display:none" onclick="if(event.target===this)closeModalStatus()">
-  <div class="modal" style="max-width:420px">
+  <div class="modal" style="max-width:500px">
     <div class="modal-header">
       <div>
-        <h2 id="ms-titulo">Atualizar Status</h2>
+        <h2 id="ms-titulo">Editar Pedido</h2>
         <div class="modal-pedido" id="ms-info"></div>
       </div>
       <button class="btn-close" onclick="closeModalStatus()">
@@ -607,6 +603,9 @@ tbody td { padding: 13px 16px; font-size: 13px; font-weight: 600; color: var(--t
       </button>
     </div>
     <div class="modal-body">
+
+      <!-- STATUS -->
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-light);margin-bottom:10px">Status</div>
       <div class="status-options">
         <div class="status-opt ag" onclick="selectStatus('AGUARDANDO')">
           <div class="status-opt-icon">⏳</div>
@@ -625,17 +624,65 @@ tbody td { padding: 13px 16px; font-size: 13px; font-weight: 600; color: var(--t
           <div class="status-opt-label">Baixado</div>
         </div>
       </div>
-      <div id="dtpagto-wrap" style="display:none">
+
+      <!-- DATA PAGAMENTO (aparece para Comprovante e Baixado) -->
+      <div id="dtpagto-wrap" style="display:none; margin-top:16px">
         <div class="divider" style="margin: 0 0 16px;"></div>
         <div class="field">
-          <label>Data do Comprovante</label>
+          <label>Data de Pagamento</label>
           <input id="ms-dtpagto" type="date"/>
         </div>
       </div>
+
+      <div class="divider" style="margin: 20px 0 16px;"></div>
+
+      <!-- ENVIADO -->
+      <div class="field" style="margin-bottom:16px">
+        <label>Forma de Envio</label>
+        <select id="ms-enviado">
+          <option value="">Selecione...</option>
+          <option value="MANDAE">MANDAÉ</option>
+          <option value="TAXI">TAXI</option>
+          <option value="MOTOBOY">MOTOBOY</option>
+          <option value="RETIRADA NA LOJA">RETIRADA NA LOJA</option>
+        </select>
+      </div>
+
+      <!-- EDIÇÃO DE VALORES -->
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-light);margin-bottom:10px">Corrigir valores (opcional)</div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Valor do Pedido (R$)</label>
+          <input id="ms-valor" type="number" step="0.01" min="0" placeholder="0.00" oninput="calcTotalEdit()"/>
+        </div>
+        <div class="field">
+          <label>Frete (R$)</label>
+          <input id="ms-frete" type="number" step="0.01" min="0" placeholder="0.00" oninput="calcTotalEdit()"/>
+        </div>
+        <div class="field">
+          <label>ST (R$)</label>
+          <input id="ms-st" type="number" step="0.01" min="0" placeholder="0.00" oninput="calcTotalEdit()"/>
+        </div>
+        <div class="field">
+          <label>Sinal (R$)</label>
+          <input id="ms-sinal" type="number" step="0.01" min="0" placeholder="0.00" oninput="calcTotalEdit()"/>
+        </div>
+        <div class="field">
+          <label>Crédito (R$)</label>
+          <input id="ms-credito" type="number" step="0.01" min="0" placeholder="0.00" oninput="calcTotalEdit()"/>
+        </div>
+        <div class="field">
+          <label>Total calculado</label>
+          <div class="total-preview" style="margin-top:0; padding:8px 12px">
+            <span class="tv" id="ms-total-preview" style="font-size:15px">—</span>
+          </div>
+        </div>
+      </div>
+
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeModalStatus()">Cancelar</button>
-      <button class="btn-save" onclick="confirmarStatus()" id="btn-confirmar-status">Confirmar</button>
+      <button class="btn-save" onclick="confirmarStatus()" id="btn-confirmar-status">Salvar alterações</button>
     </div>
   </div>
 </div>
@@ -742,7 +789,7 @@ function renderTable() {
     filtered.length + ' pedido' + (plural(filtered.length) ? 's' : '') + ' exibido' + (plural(filtered.length) ? 's' : '');
 
   if (!filtered.length) {
-    tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state">
+    tbody.innerHTML = `<tr><td colspan="11"><div class="empty-state">
       <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg></div>
       <div class="empty-title">Nenhum pedido encontrado</div>
       <div class="empty-sub">${accessToken ? 'Tente outro filtro ou busca' : 'Conecte a planilha para carregar os pedidos'}</div>
@@ -753,6 +800,12 @@ function renderTable() {
   tbody.innerHTML = filtered.map(r => {
     const sk = statusKey(r[11]);
     const realIdx = rows.indexOf(r);
+    const enviadoKey = (r[15] || '').toUpperCase();
+    const enviadoBadge = enviadoKey === 'MANDAE' ? '<span style="background:#E0F2FE;color:#0369A1;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700">MANDAÉ</span>'
+      : enviadoKey === 'TAXI' ? '<span style="background:#FEF9C3;color:#854D0E;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700">TAXI</span>'
+      : enviadoKey === 'MOTOBOY' ? '<span style="background:#F3E8FF;color:#6B21A8;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700">MOTOBOY</span>'
+      : enviadoKey.includes('RETIR') ? '<span style="background:#ECFDF5;color:#065F46;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700">RETIRADA</span>'
+      : '—';
     return `<tr class="row-enter">
       <td class="td-data">${r[0] || '—'}</td>
       <td class="td-pedido">${r[1] || '—'}</td>
@@ -762,8 +815,9 @@ function renderTable() {
       <td class="td-frete">${fmt(r[7])}</td>
       <td><span class="badge ${sk}">${statusLabel(r[11])}</span></td>
       <td class="td-data">${r[12] || '—'}</td>
+      <td>${enviadoBadge}</td>
       <td style="color:var(--text-muted);font-size:12px">${r[14] || '—'}</td>
-      <td><button class="btn-edit" onclick="openModalStatus(${realIdx})" title="Alterar status">
+      <td><button class="btn-edit" onclick="openModalStatus(${realIdx})" title="Editar pedido">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
       </button></td>
     </tr>`;
@@ -775,10 +829,6 @@ function updateStats() {
   document.getElementById('cnt-ag').textContent = data.filter(r => (r[11]||'').toUpperCase().includes('AGUARD')).length;
   document.getElementById('cnt-cp').textContent = data.filter(r => (r[11]||'').toUpperCase().includes('COMPROV')).length;
   document.getElementById('cnt-cf').textContent = data.filter(r => (r[11]||'').toUpperCase().includes('CONFIRM')).length;
-  document.getElementById('cnt-bx').textContent = data.filter(r => {
-    const s = (r[11]||'').toUpperCase();
-    return !s.includes('AGUARD') && !s.includes('COMPROV') && !s.includes('CONFIRM') && s.length > 0;
-  }).length;
 }
 
 // ── API SHEETS ──
@@ -889,31 +939,69 @@ async function salvarPedido() {
   }
 }
 
-// ── MODAL STATUS ──
+// ── MODAL STATUS / EDIÇÃO ──
 function openModalStatus(rowIdx) {
   currentEditRow = rowIdx;
   selectedStatus = null;
   const r = rows[rowIdx];
   document.getElementById('ms-titulo').textContent = 'Pedido ' + (r[1] || '');
   document.getElementById('ms-info').textContent = (r[2] || '') + ' — ' + fmt(r[9]);
+
+  // Status atual
   document.querySelectorAll('.status-opt').forEach(o => o.classList.remove('sel'));
   const sk = statusKey(r[11]);
   const map = { ag: 'AGUARDANDO', cp: 'COMPROVANTE', cf: 'CONFIRMADO', bx: 'BAIXADO' };
   selectStatus(map[sk]);
+
+  // Data pagamento
   document.getElementById('ms-dtpagto').value = '';
+  if (r[12]) {
+    const parts = r[12].split('/');
+    if (parts.length === 3) document.getElementById('ms-dtpagto').value = `${parts[2]}-${parts[1]}-${parts[0]}`;
+  }
+
+  // Enviado
+  const envVal = (r[15] || '').toUpperCase();
+  const sel = document.getElementById('ms-enviado');
+  if (envVal === 'MANDAE' || envVal === 'MANDAÉ') sel.value = 'MANDAE';
+  else if (envVal === 'TAXI') sel.value = 'TAXI';
+  else if (envVal === 'MOTOBOY') sel.value = 'MOTOBOY';
+  else if (envVal.includes('RETIR')) sel.value = 'RETIRADA NA LOJA';
+  else sel.value = '';
+
+  // Valores atuais
+  const parseVal = v => { if (!v) return ''; const n = parseFloat(v.toString().replace('R$','').replace(/\./g,'').replace(',','.')); return isNaN(n) ? '' : n.toFixed(2); };
+  document.getElementById('ms-valor').value = parseVal(r[3]);
+  document.getElementById('ms-frete').value = parseVal(r[7]);
+  document.getElementById('ms-st').value = parseVal(r[8]);
+  document.getElementById('ms-sinal').value = parseVal(r[5]);
+  document.getElementById('ms-credito').value = parseVal(r[6]);
+  calcTotalEdit();
+
   document.getElementById('modal-status').style.display = 'flex';
 }
 function closeModalStatus() { document.getElementById('modal-status').style.display = 'none'; }
+
+function calcTotalEdit() {
+  const v = parseFloat(document.getElementById('ms-valor').value) || 0;
+  const fr = parseFloat(document.getElementById('ms-frete').value) || 0;
+  const st = parseFloat(document.getElementById('ms-st').value) || 0;
+  const sn = parseFloat(document.getElementById('ms-sinal').value) || 0;
+  const cr = parseFloat(document.getElementById('ms-credito').value) || 0;
+  const total = v + fr + st - sn - cr;
+  document.getElementById('ms-total-preview').textContent = total > 0 ? fmt(total) : '—';
+}
 
 function selectStatus(s) {
   selectedStatus = s;
   document.querySelectorAll('.status-opt').forEach(o => o.classList.remove('sel'));
   const map = { AGUARDANDO: 'ag', COMPROVANTE: 'cp', CONFIRMADO: 'cf', BAIXADO: 'bx' };
   document.querySelectorAll('.status-opt.' + (map[s] || '')).forEach(o => o.classList.add('sel'));
-  document.getElementById('dtpagto-wrap').style.display = (s === 'COMPROVANTE') ? 'block' : 'none';
-  if (s === 'COMPROVANTE') {
-    const today = new Date().toISOString().split('T')[0];
-    if (!document.getElementById('ms-dtpagto').value) document.getElementById('ms-dtpagto').value = today;
+  // Mostra data de pagamento para Comprovante e Baixado
+  const showDt = (s === 'COMPROVANTE' || s === 'BAIXADO');
+  document.getElementById('dtpagto-wrap').style.display = showDt ? 'block' : 'none';
+  if (showDt && !document.getElementById('ms-dtpagto').value) {
+    document.getElementById('ms-dtpagto').value = new Date().toISOString().split('T')[0];
   }
 }
 
@@ -921,41 +1009,73 @@ async function confirmarStatus() {
   if (!accessToken) { toast('Conecte a planilha primeiro', 'error'); return; }
   if (!selectedStatus) { toast('Selecione um status'); return; }
   const rowIdx = currentEditRow;
-  const sheetRow = rowIdx + 1; // 1-indexed, linha 1 é cabeçalho
+  const sheetRow = rowIdx + 1;
   const btn = document.getElementById('btn-confirmar-status');
   btn.disabled = true; btn.textContent = 'Salvando...';
 
-  // Monta label completo para a planilha
-  const labelMap = {
-    AGUARDANDO: 'AGUARDANDO',
-    COMPROVANTE: 'COMPROVANTE',
-    CONFIRMADO: 'CONFIRMADO',
-    BAIXADO: 'BAIXADO'
-  };
+  const labelMap = { AGUARDANDO: 'AGUARDANDO', COMPROVANTE: 'COMPROVANTE', CONFIRMADO: 'CONFIRMADO', BAIXADO: 'BAIXADO' };
 
   try {
-    // Atualiza coluna L (status) — linha sheetRow
-    await apiUpdate(`${SHEET_NAME}!L${sheetRow}`, [[labelMap[selectedStatus]]]);
+    const updates = [];
 
-    // Se comprovante, atualiza coluna M (data pagamento)
-    if (selectedStatus === 'COMPROVANTE') {
-      const dt = document.getElementById('ms-dtpagto').value;
-      if (dt) {
-        const [y,m,d] = dt.split('-');
-        await apiUpdate(`${SHEET_NAME}!M${sheetRow}`, [[`${d}/${m}/${y}`]]);
-        rows[rowIdx][12] = `${d}/${m}/${y}`;
-      }
+    // Status (col L)
+    updates.push({ range: `${SHEET_NAME}!L${sheetRow}`, values: [[labelMap[selectedStatus]]] });
+
+    // Data pagamento (col M) — para Comprovante e Baixado
+    const dtVal = document.getElementById('ms-dtpagto').value;
+    if ((selectedStatus === 'COMPROVANTE' || selectedStatus === 'BAIXADO') && dtVal) {
+      const [y,m,d] = dtVal.split('-');
+      const dtFmt = `${d}/${m}/${y}`;
+      updates.push({ range: `${SHEET_NAME}!M${sheetRow}`, values: [[dtFmt]] });
+      rows[rowIdx][12] = dtFmt;
     }
+
+    // Enviado (col P)
+    const envVal = document.getElementById('ms-enviado').value;
+    updates.push({ range: `${SHEET_NAME}!P${sheetRow}`, values: [[envVal]] });
+    rows[rowIdx][15] = envVal;
+
+    // Valores (cols D, F, G, H, I, J) — só atualiza se preenchido
+    const vValor = parseFloat(document.getElementById('ms-valor').value);
+    const vFrete = parseFloat(document.getElementById('ms-frete').value) || 0;
+    const vSt = parseFloat(document.getElementById('ms-st').value) || 0;
+    const vSinal = parseFloat(document.getElementById('ms-sinal').value) || 0;
+    const vCredito = parseFloat(document.getElementById('ms-credito').value) || 0;
+
+    if (!isNaN(vValor)) {
+      const vTotal = vValor + vFrete + vSt - vSinal - vCredito;
+      updates.push({ range: `${SHEET_NAME}!D${sheetRow}`, values: [[vValor.toFixed(2)]] });
+      updates.push({ range: `${SHEET_NAME}!F${sheetRow}`, values: [[vSinal.toFixed(2)]] });
+      updates.push({ range: `${SHEET_NAME}!G${sheetRow}`, values: [[vCredito.toFixed(2)]] });
+      updates.push({ range: `${SHEET_NAME}!H${sheetRow}`, values: [[vFrete.toFixed(2)]] });
+      updates.push({ range: `${SHEET_NAME}!I${sheetRow}`, values: [[vSt.toFixed(2)]] });
+      updates.push({ range: `${SHEET_NAME}!J${sheetRow}`, values: [[vTotal.toFixed(2)]] });
+      rows[rowIdx][3] = vValor.toFixed(2);
+      rows[rowIdx][5] = vSinal.toFixed(2);
+      rows[rowIdx][6] = vCredito.toFixed(2);
+      rows[rowIdx][7] = vFrete.toFixed(2);
+      rows[rowIdx][8] = vSt.toFixed(2);
+      rows[rowIdx][9] = vTotal.toFixed(2);
+    }
+
+    // Batch update
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values:batchUpdate`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ valueInputOption: 'USER_ENTERED', data: updates })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
 
     rows[rowIdx][11] = labelMap[selectedStatus];
     updateStats();
     renderTable();
     closeModalStatus();
-    toast('Status atualizado na planilha!', 'success');
+    toast('Pedido atualizado na planilha!', 'success');
   } catch(e) {
-    toast('Erro ao atualizar: ' + e.message, 'error');
+    toast('Erro ao salvar: ' + e.message, 'error');
   } finally {
-    btn.disabled = false; btn.textContent = 'Confirmar';
+    btn.disabled = false; btn.textContent = 'Salvar alterações';
   }
 }
 
