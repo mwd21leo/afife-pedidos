@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Afife — Gestão de Pedidos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --red: #D32B1E;
+  --red-dark: #A82015;
+  --red-light: #F5E8E7;
+  --red-mid: #E8534A;
+  --yellow: #F5E642;
+  --yellow-dark: #C9BB0A;
+  --white: #FFFFFF;
+  --off-white: #FDF8F8;
+  --gray-50: #F9F5F5;
+  --gray-100: #F0E8E8;
+  --gray-200: #E0D0D0;
+  --gray-400: #B08080;
+  --gray-600: #7A5050;
+  --gray-800: #3D2020;
+  --text-main: #1A0A0A;
+  --text-muted: #7A5050;
+  --text-light: #B08080;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --shadow-sm: 0 1px 3px rgba(211,43,30,0.08);
+  --shadow-md: 0 4px 16px rgba(211,43,30,0.12);
+  --shadow-lg: 0 8px 32px rgba(211,43,30,0.18);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--gray-50);
+  color: var(--text-main);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ─── LAYOUT ─── */
+.app { display: flex; height: 100vh; overflow: hidden; }
+
+/* ─── SIDEBAR ─── */
+.sidebar {
+  width: 220px; flex-shrink: 0;
+  background: var(--red);
+  display: flex; flex-direction: column;
+  padding: 0;
+}
+.sidebar-header {
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.15);
+}
+.logo {
+  display: flex; align-items: center; gap: 6px;
+  text-decoration: none;
+}
+.logo-text {
+  font-size: 28px; font-weight: 800; color: var(--white);
+  letter-spacing: -0.5px; line-height: 1;
+}
+.logo-star {
+  font-size: 20px; line-height: 1;
+  display: inline-block;
+}
+.sidebar-subtitle {
+  font-size: 11px; color: rgba(255,255,255,0.6);
+  margin-top: 4px; font-weight: 500; letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.nav { padding: 16px 12px; flex: 1; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: var(--radius-md);
+  color: rgba(255,255,255,0.7); font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all 0.15s; margin-bottom: 2px;
+  border: none; background: none; width: 100%; text-align: left;
+}
+.nav-item:hover { background: rgba(255,255,255,0.12); color: var(--white); }
+.nav-item.active { background: rgba(255,255,255,0.18); color: var(--white); }
+.nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+.sidebar-footer {
+  padding: 16px 12px;
+  border-top: 1px solid rgba(255,255,255,0.15);
+}
+.btn-auth-sidebar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px; border-radius: var(--radius-md);
+  background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
+  color: var(--white); font-size: 12px; font-weight: 700; cursor: pointer;
+  transition: all 0.15s; width: 100%; font-family: 'Nunito', sans-serif;
+}
+.btn-auth-sidebar:hover { background: rgba(255,255,255,0.25); }
+.btn-auth-sidebar.connected { background: rgba(245,230,66,0.2); border-color: rgba(245,230,66,0.4); color: var(--yellow); }
+.sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--yellow); flex-shrink: 0; }
+.sync-dot.off { background: rgba(255,255,255,0.3); }
+
+/* ─── MAIN ─── */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+/* ─── TOPBAR ─── */
+.topbar {
+  background: var(--white);
+  border-bottom: 1px solid var(--gray-200);
+  padding: 0 28px;
+  display: flex; align-items: center; gap: 16px; height: 64px;
+  flex-shrink: 0;
+}
+.topbar-title { font-size: 18px; font-weight: 800; color: var(--text-main); flex: 1; }
+.topbar-title span { color: var(--red); }
+.sync-info { font-size: 11px; color: var(--text-light); font-weight: 600; }
+.btn-refresh {
+  width: 34px; height: 34px; border-radius: var(--radius-sm);
+  background: var(--gray-50); border: 1px solid var(--gray-200);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.btn-refresh:hover { background: var(--red-light); border-color: var(--red); }
+.btn-refresh svg { width: 15px; height: 15px; color: var(--text-muted); }
+.btn-refresh:hover svg { color: var(--red); }
+.btn-novo-top {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 18px; border-radius: var(--radius-md);
+  background: var(--red); border: none; color: var(--white);
+  font-size: 13px; font-weight: 700; cursor: pointer;
+  transition: all 0.15s; font-family: 'Nunito', sans-serif;
+}
+.btn-novo-top:hover { background: var(--red-dark); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.btn-novo-top svg { width: 15px; height: 15px; }
+
+/* ─── CONTENT ─── */
+.content { flex: 1; overflow-y: auto; padding: 24px 28px; }
+
+/* ─── STATS ─── */
+.stats-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 14px; margin-bottom: 24px;
+}
+.stat-card {
+  background: var(--white); border-radius: var(--radius-lg);
+  border: 1px solid var(--gray-200); padding: 18px 20px;
+  box-shadow: var(--shadow-sm); position: relative; overflow: hidden;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.stat-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+}
+.stat-card.ag::before { background: #2563EB; }
+.stat-card.cp::before { background: #D97706; }
+.stat-card.cf::before { background: #059669; }
+.stat-card.bx::before { background: #6B7280; }
+.stat-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-light); margin-bottom: 8px; }
+.stat-value { font-size: 32px; font-weight: 800; line-height: 1; }
+.stat-card.ag .stat-value { color: #2563EB; }
+.stat-card.cp .stat-value { color: #D97706; }
+.stat-card.cf .stat-value { color: #059669; }
+.stat-card.bx .stat-value { color: #6B7280; }
+.stat-sublabel { font-size: 11px; color: var(--text-light); margin-top: 4px; font-weight: 600; }
+
+/* ─── FILTERS ─── */
+.filters-row {
+  display: flex; gap: 8px; align-items: center;
+  margin-bottom: 16px; flex-wrap: wrap;
+}
+.search-wrap { position: relative; flex: 1; min-width: 220px; max-width: 340px; }
+.search-wrap svg {
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  width: 15px; height: 15px; color: var(--text-light); pointer-events: none;
+}
+.search-input {
+  width: 100%; padding: 9px 12px 9px 36px;
+  border: 1px solid var(--gray-200); border-radius: var(--radius-md);
+  background: var(--white); color: var(--text-main);
+  font-size: 13px; font-family: 'Nunito', sans-serif; font-weight: 600;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.search-input:focus { outline: none; border-color: var(--red); box-shadow: 0 0 0 3px rgba(211,43,30,0.1); }
+.search-input::placeholder { color: var(--text-light); }
+.filter-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip {
+  padding: 7px 14px; border-radius: 20px; font-size: 12px; font-weight: 700;
+  cursor: pointer; transition: all 0.15s; border: 1.5px solid transparent;
+  font-family: 'Nunito', sans-serif; white-space: nowrap;
+}
+.chip.all { background: var(--gray-100); color: var(--text-muted); border-color: var(--gray-200); }
+.chip.all.active { background: var(--red); color: var(--white); border-color: var(--red); }
+.chip.ag { background: #EFF6FF; color: #1D4ED8; border-color: #BFDBFE; }
+.chip.ag.active { background: #2563EB; color: white; border-color: #2563EB; }
+.chip.cp { background: #FFFBEB; color: #92400E; border-color: #FDE68A; }
+.chip.cp.active { background: #D97706; color: white; border-color: #D97706; }
+.chip.cf { background: #ECFDF5; color: #065F46; border-color: #A7F3D0; }
+.chip.cf.active { background: #059669; color: white; border-color: #059669; }
+.chip.bx { background: #F9FAFB; color: #374151; border-color: #E5E7EB; }
+.chip.bx.active { background: #6B7280; color: white; border-color: #6B7280; }
+
+/* ─── TABLE ─── */
+.table-card {
+  background: var(--white); border-radius: var(--radius-lg);
+  border: 1px solid var(--gray-200); overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; min-width: 800px; }
+thead th {
+  padding: 12px 16px; text-align: left;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
+  color: var(--text-light); background: var(--gray-50);
+  border-bottom: 1px solid var(--gray-200); white-space: nowrap;
+}
+tbody tr { border-bottom: 1px solid var(--gray-100); transition: background 0.1s; }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: var(--off-white); }
+tbody td { padding: 13px 16px; font-size: 13px; font-weight: 600; color: var(--text-main); }
+.td-pedido { font-weight: 800; color: var(--red); font-size: 13px; }
+.td-cliente { font-weight: 700; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.td-valor { font-weight: 800; font-size: 13px; }
+.td-frete { color: var(--text-muted); font-weight: 600; }
+.td-data { color: var(--text-muted); font-size: 12px; font-weight: 600; }
+
+/* ─── BADGES ─── */
+.badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 10px; border-radius: 20px;
+  font-size: 11px; font-weight: 700; white-space: nowrap;
+}
+.badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.badge.ag { background: #EFF6FF; color: #1D4ED8; }
+.badge.ag::before { background: #2563EB; }
+.badge.cp { background: #FFFBEB; color: #92400E; }
+.badge.cp::before { background: #D97706; }
+.badge.cf { background: #ECFDF5; color: #065F46; }
+.badge.cf::before { background: #059669; }
+.badge.bx { background: #F9FAFB; color: #374151; }
+.badge.bx::before { background: #9CA3AF; }
+
+/* ─── ACTION BTN ─── */
+.btn-edit {
+  width: 30px; height: 30px; border-radius: var(--radius-sm);
+  background: var(--gray-50); border: 1px solid var(--gray-200);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.btn-edit:hover { background: var(--red-light); border-color: var(--red); }
+.btn-edit svg { width: 13px; height: 13px; color: var(--text-muted); }
+.btn-edit:hover svg { color: var(--red); }
+
+/* ─── EMPTY / LOADING ─── */
+.empty-state {
+  padding: 60px 24px; text-align: center;
+}
+.empty-icon {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: var(--red-light); display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 16px;
+}
+.empty-icon svg { width: 24px; height: 24px; color: var(--red); }
+.empty-title { font-size: 16px; font-weight: 800; color: var(--text-main); margin-bottom: 6px; }
+.empty-sub { font-size: 13px; color: var(--text-muted); font-weight: 600; }
+.spinner-row { text-align: center; padding: 40px; }
+.spinner {
+  width: 28px; height: 28px; border: 3px solid var(--gray-200);
+  border-top-color: var(--red); border-radius: 50%;
+  animation: spin 0.7s linear infinite; margin: 0 auto 12px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.row-enter { animation: fadeIn 0.2s ease; }
+.spinning { animation: spin 0.7s linear infinite; }
+
+/* ─── TABLE FOOTER ─── */
+.table-footer {
+  padding: 10px 16px; background: var(--gray-50);
+  border-top: 1px solid var(--gray-100);
+  font-size: 11px; color: var(--text-light); font-weight: 700;
+}
+
+/* ─── MODAL ─── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(26,10,10,0.5);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000; padding: 24px;
+  animation: fadeIn 0.15s ease;
+}
+.modal {
+  background: var(--white); border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg); width: 560px; max-width: 100%;
+  max-height: 90vh; overflow-y: auto;
+  animation: slideUp 0.2s ease;
+}
+@keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+.modal-header {
+  background: var(--red); padding: 20px 24px;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.modal-header h2 { font-size: 16px; font-weight: 800; color: var(--white); }
+.modal-header .modal-pedido { font-size: 12px; color: rgba(255,255,255,0.7); font-weight: 600; margin-top: 2px; }
+.btn-close {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: rgba(255,255,255,0.15); border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: background 0.15s;
+}
+.btn-close:hover { background: rgba(255,255,255,0.25); }
+.btn-close svg { width: 14px; height: 14px; color: var(--white); }
+.modal-body { padding: 24px; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.form-grid .full { grid-column: 1 / -1; }
+.field label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-light); margin-bottom: 6px; }
+.field input, .field select {
+  width: 100%; padding: 9px 12px;
+  border: 1.5px solid var(--gray-200); border-radius: var(--radius-md);
+  background: var(--white); color: var(--text-main);
+  font-size: 13px; font-family: 'Nunito', sans-serif; font-weight: 600;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.field input:focus, .field select:focus {
+  outline: none; border-color: var(--red); box-shadow: 0 0 0 3px rgba(211,43,30,0.1);
+}
+.field .hint { font-size: 11px; color: var(--text-light); margin-top: 5px; font-weight: 600; }
+.total-preview {
+  background: var(--red-light); border-radius: var(--radius-md);
+  padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;
+  margin-top: 4px;
+}
+.total-preview .tl { font-size: 12px; font-weight: 700; color: var(--red); }
+.total-preview .tv { font-size: 20px; font-weight: 800; color: var(--red); }
+.modal-footer { padding: 0 24px 24px; display: flex; gap: 10px; justify-content: flex-end; }
+.btn-cancel {
+  padding: 10px 20px; border-radius: var(--radius-md);
+  border: 1.5px solid var(--gray-200); background: var(--white);
+  color: var(--text-muted); font-size: 13px; font-weight: 700;
+  cursor: pointer; transition: all 0.15s; font-family: 'Nunito', sans-serif;
+}
+.btn-cancel:hover { background: var(--gray-50); }
+.btn-save {
+  padding: 10px 24px; border-radius: var(--radius-md);
+  background: var(--red); border: none; color: var(--white);
+  font-size: 13px; font-weight: 800; cursor: pointer;
+  transition: all 0.15s; font-family: 'Nunito', sans-serif;
+}
+.btn-save:hover { background: var(--red-dark); }
+.btn-save:disabled { background: var(--gray-400); cursor: not-allowed; }
+.divider { height: 1px; background: var(--gray-100); margin: 0 24px 20px; }
+
+/* ─── MODAL STATUS ─── */
+.status-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.status-opt {
+  padding: 12px; border-radius: var(--radius-md); cursor: pointer;
+  border: 2px solid transparent; transition: all 0.15s; text-align: center;
+  font-weight: 700; font-size: 12px;
+}
+.status-opt.ag { background: #EFF6FF; color: #1D4ED8; border-color: #BFDBFE; }
+.status-opt.ag.sel { border-color: #2563EB; background: #DBEAFE; }
+.status-opt.cp { background: #FFFBEB; color: #92400E; border-color: #FDE68A; }
+.status-opt.cp.sel { border-color: #D97706; background: #FEF3C7; }
+.status-opt.cf { background: #ECFDF5; color: #065F46; border-color: #A7F3D0; }
+.status-opt.cf.sel { border-color: #059669; background: #D1FAE5; }
+.status-opt.bx { background: #F9FAFB; color: #374151; border-color: #E5E7EB; }
+.status-opt.bx.sel { border-color: #6B7280; background: #F3F4F6; }
+.status-opt-icon { font-size: 18px; margin-bottom: 4px; }
+.status-opt-label { font-size: 11px; }
+
+/* ─── TOAST ─── */
+.toast {
+  position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+  background: var(--gray-800); color: var(--white);
+  padding: 12px 22px; border-radius: var(--radius-lg);
+  font-size: 13px; font-weight: 700; z-index: 9999;
+  box-shadow: var(--shadow-lg);
+  animation: toastIn 0.25s ease;
+}
+.toast.success { background: #065F46; }
+.toast.error { background: #991B1B; }
+@keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 900px) {
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .sidebar { width: 64px; }
+  .logo-text, .sidebar-subtitle, .nav-item span, .btn-auth-sidebar span { display: none; }
+  .nav-item { justify-content: center; padding: 12px; }
+  .logo { justify-content: center; }
+  .btn-auth-sidebar { justify-content: center; padding: 10px; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <span class="logo-text">Afife</span>
+        <span class="logo-star">⭐</span>
+      </div>
+      <div class="sidebar-subtitle">Gestão de Pedidos</div>
+    </div>
+    <nav class="nav">
+      <button class="nav-item active" onclick="setView('pedidos')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 12h8M8 8h5M8 16h3"/></svg>
+        <span>Pedidos</span>
+      </button>
+      <button class="nav-item" onclick="setView('novo')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+        <span>Novo pedido</span>
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="btn-auth-sidebar" id="btn-auth" onclick="handleAuth()">
+        <div class="sync-dot off" id="sync-dot"></div>
+        <span id="auth-label">Conectar planilha</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="topbar-title" id="page-title">Todos os <span>Pedidos</span></div>
+      <div class="sync-info" id="sync-info">Não conectado</div>
+      <button class="btn-refresh" onclick="loadSheetData()" title="Atualizar">
+        <svg id="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v5h5M20 20v-5h-5"/><path d="M4 9a8 8 0 0 1 14.93-2M20 15a8 8 0 0 1-14.93 2"/></svg>
+      </button>
+      <button class="btn-novo-top" onclick="openModalNovo()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+        Novo pedido
+      </button>
+    </header>
+
+    <!-- CONTENT -->
+    <div class="content" id="content-pedidos">
+
+      <!-- STATS -->
+      <div class="stats-grid">
+        <div class="stat-card ag">
+          <div class="stat-label">Aguardando</div>
+          <div class="stat-value" id="cnt-ag">—</div>
+          <div class="stat-sublabel">pagamento pendente</div>
+        </div>
+        <div class="stat-card cp">
+          <div class="stat-label">Comprovante</div>
+          <div class="stat-value" id="cnt-cp">—</div>
+          <div class="stat-sublabel">aguardando confirmação</div>
+        </div>
+        <div class="stat-card cf">
+          <div class="stat-label">Confirmados</div>
+          <div class="stat-value" id="cnt-cf">—</div>
+          <div class="stat-sublabel">prontos para baixar</div>
+        </div>
+        <div class="stat-card bx">
+          <div class="stat-label">Baixados</div>
+          <div class="stat-value" id="cnt-bx">—</div>
+          <div class="stat-sublabel">total no período</div>
+        </div>
+      </div>
+
+      <!-- FILTERS -->
+      <div class="filters-row">
+        <div class="search-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input class="search-input" id="search" type="text" placeholder="Buscar cliente, pedido, telefone..." oninput="renderTable()"/>
+        </div>
+        <div class="filter-chips">
+          <button class="chip all active" onclick="setFilter('all',this)">Todos</button>
+          <button class="chip ag" onclick="setFilter('AGUARDANDO',this)">Aguardando</button>
+          <button class="chip cp" onclick="setFilter('COMPROVANTE',this)">Comprovante</button>
+          <button class="chip cf" onclick="setFilter('CONFIRMADO',this)">Confirmado</button>
+          <button class="chip bx" onclick="setFilter('BAIXADO',this)">Baixado</button>
+        </div>
+      </div>
+
+      <!-- TABLE -->
+      <div class="table-card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Pedido</th>
+                <th>Cliente</th>
+                <th>Telefone</th>
+                <th>Total</th>
+                <th>Frete</th>
+                <th>Status</th>
+                <th>Dt. Pgto</th>
+                <th>Vendedor</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+        <div class="table-footer" id="row-count"></div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- MODAL NOVO PEDIDO -->
+<div class="modal-overlay" id="modal-novo" style="display:none" onclick="if(event.target===this)closeModalNovo()">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <h2>Novo Pedido</h2>
+        <div class="modal-pedido">Preencha os dados — o cliente receberá o WhatsApp automaticamente</div>
+      </div>
+      <button class="btn-close" onclick="closeModalNovo()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field full">
+          <label>Cliente *</label>
+          <input id="f-cliente" type="text" placeholder="Nome completo"/>
+        </div>
+        <div class="field">
+          <label>Telefone *</label>
+          <input id="f-tel" type="text" placeholder="5511999999999"/>
+          <div class="hint">Com DDI e DDD, sem espaços</div>
+        </div>
+        <div class="field">
+          <label>Nº Pedido *</label>
+          <input id="f-pedido" type="text" placeholder="39468503"/>
+        </div>
+        <div class="field">
+          <label>Valor do Pedido (R$) *</label>
+          <input id="f-valor" type="number" step="0.01" min="0" placeholder="0.00" oninput="calcTotal()"/>
+        </div>
+        <div class="field">
+          <label>Frete (R$)</label>
+          <input id="f-frete" type="number" step="0.01" min="0" placeholder="0.00" oninput="calcTotal()"/>
+        </div>
+        <div class="field">
+          <label>ST (R$)</label>
+          <input id="f-st" type="number" step="0.01" min="0" placeholder="0.00" oninput="calcTotal()"/>
+        </div>
+        <div class="field">
+          <label>Sinal (R$)</label>
+          <input id="f-sinal" type="number" step="0.01" min="0" placeholder="0.00" oninput="calcTotal()"/>
+        </div>
+        <div class="field">
+          <label>Crédito (R$)</label>
+          <input id="f-credito" type="number" step="0.01" min="0" placeholder="0.00" oninput="calcTotal()"/>
+        </div>
+        <div class="field">
+          <label>Conta</label>
+          <select id="f-conta">
+            <option value="">Selecione...</option>
+            <option value="ITAU TITO">ITAU TITO</option>
+            <option value="ITAU MOU">ITAU MOU</option>
+            <option value="ITAU MAYOR SITE">ITAU MAYOR SITE</option>
+            <option value="ITAU DAMIA SITE">ITAU DAMIA SITE</option>
+            <option value="SHIELD MAYOR">SHIELD MAYOR</option>
+            <option value="ITAU TITO SITE">ITAU TITO SITE</option>
+            <option value="ITAU MOU SITE">ITAU MOU SITE</option>
+            <option value="ETC">ETC</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Vendedor</label>
+          <input id="f-vendedor" type="text" placeholder="Nome do vendedor"/>
+        </div>
+        <div class="field full">
+          <label>Observação</label>
+          <input id="f-obs" type="text" placeholder="Opcional"/>
+        </div>
+        <div class="field full">
+          <div class="total-preview">
+            <span class="tl">Total a cobrar</span>
+            <span class="tv" id="total-preview">R$ 0,00</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModalNovo()">Cancelar</button>
+      <button class="btn-save" onclick="salvarPedido()" id="btn-salvar">Salvar na planilha</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL STATUS -->
+<div class="modal-overlay" id="modal-status" style="display:none" onclick="if(event.target===this)closeModalStatus()">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <div>
+        <h2 id="ms-titulo">Atualizar Status</h2>
+        <div class="modal-pedido" id="ms-info"></div>
+      </div>
+      <button class="btn-close" onclick="closeModalStatus()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="status-options">
+        <div class="status-opt ag" onclick="selectStatus('AGUARDANDO')">
+          <div class="status-opt-icon">⏳</div>
+          <div class="status-opt-label">Aguardando Pagamento</div>
+        </div>
+        <div class="status-opt cp" onclick="selectStatus('COMPROVANTE')">
+          <div class="status-opt-icon">📄</div>
+          <div class="status-opt-label">Comprovante Recebido</div>
+        </div>
+        <div class="status-opt cf" onclick="selectStatus('CONFIRMADO')">
+          <div class="status-opt-icon">✅</div>
+          <div class="status-opt-label">Confirmado</div>
+        </div>
+        <div class="status-opt bx" onclick="selectStatus('BAIXADO')">
+          <div class="status-opt-icon">📦</div>
+          <div class="status-opt-label">Baixado</div>
+        </div>
+      </div>
+      <div id="dtpagto-wrap" style="display:none">
+        <div class="divider" style="margin: 0 0 16px;"></div>
+        <div class="field">
+          <label>Data do Comprovante</label>
+          <input id="ms-dtpagto" type="date"/>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModalStatus()">Cancelar</button>
+      <button class="btn-save" onclick="confirmarStatus()" id="btn-confirmar-status">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SHEET_ID = '1EzlwMIWWwe1qckBzRrEJCwAIgkY67UDx1MDNwfoAk9g';
+const SHEET_NAME = 'Página1';
+const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
+
+// ─── CONFIGURAÇÃO GOOGLE OAUTH ───────────────────────────────────────────────
+// 1. Acesse https://console.cloud.google.com
+// 2. Crie um projeto e ative a Google Sheets API
+// 3. Crie credencial OAuth 2.0 > Aplicativo da Web
+// 4. Adicione a origem onde este arquivo será aberto em "Origens JS autorizadas"
+//    Ex: http://localhost:8080  ou  https://seudominio.com.br
+// 5. Cole o Client ID abaixo:
+const CLIENT_ID = 'SEU_CLIENT_ID.apps.googleusercontent.com';
+// ────────────────────────────────────────────────────────────────────────────
+
+let rows = [];
+let currentFilter = 'all';
+let currentEditRow = null;
+let selectedStatus = null;
+let accessToken = null;
+let tokenExpiry = 0;
+let syncInterval = null;
+
+// ── UTILS ──
+function toast(msg, type='', dur=3000) {
+  document.querySelectorAll('.toast').forEach(e => e.remove());
+  const el = document.createElement('div');
+  el.className = 'toast' + (type ? ' ' + type : '');
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity 0.3s'; setTimeout(() => el.remove(), 400); }, dur);
+}
+
+function fmt(v) {
+  const n = parseFloat(v);
+  if (isNaN(n)) return '—';
+  return 'R$ ' + n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function statusKey(s) {
+  if (!s) return 'bx';
+  const u = s.toUpperCase();
+  if (u.includes('AGUARD')) return 'ag';
+  if (u.includes('COMPROV')) return 'cp';
+  if (u.includes('CONFIRM')) return 'cf';
+  return 'bx';
+}
+
+function statusLabel(s) {
+  const k = statusKey(s);
+  return { ag: 'Aguardando', cp: 'Comprovante', cf: 'Confirmado', bx: 'Baixado' }[k];
+}
+
+function calcTotal() {
+  const v = parseFloat(document.getElementById('f-valor').value) || 0;
+  const fr = parseFloat(document.getElementById('f-frete').value) || 0;
+  const st = parseFloat(document.getElementById('f-st').value) || 0;
+  const sn = parseFloat(document.getElementById('f-sinal').value) || 0;
+  const cr = parseFloat(document.getElementById('f-credito').value) || 0;
+  const total = v + fr + st - sn - cr;
+  document.getElementById('total-preview').textContent = fmt(total);
+}
+
+// ── VIEW ──
+function setView(v) {
+  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  if (v === 'novo') openModalNovo();
+}
+
+// ── FILTER ──
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  renderTable();
+}
+
+// ── RENDER TABLE ──
+function renderTable() {
+  const q = (document.getElementById('search').value || '').toLowerCase();
+  const tbody = document.getElementById('tbody');
+  const data = rows.slice(1);
+
+  let filtered = data.filter(r => {
+    const s = (r[11] || '').toUpperCase();
+    if (currentFilter === 'AGUARDANDO' && !s.includes('AGUARD')) return false;
+    if (currentFilter === 'COMPROVANTE' && !s.includes('COMPROV')) return false;
+    if (currentFilter === 'CONFIRMADO' && !s.includes('CONFIRM')) return false;
+    if (currentFilter === 'BAIXADO' && (s.includes('AGUARD') || s.includes('COMPROV') || s.includes('CONFIRM'))) return false;
+    if (q) {
+      const hay = [(r[2]||''), (r[1]||''), (r[10]||''), (r[14]||'')].join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  const plural = n => n !== 1;
+  document.getElementById('row-count').textContent =
+    filtered.length + ' pedido' + (plural(filtered.length) ? 's' : '') + ' exibido' + (plural(filtered.length) ? 's' : '');
+
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state">
+      <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg></div>
+      <div class="empty-title">Nenhum pedido encontrado</div>
+      <div class="empty-sub">${accessToken ? 'Tente outro filtro ou busca' : 'Conecte a planilha para carregar os pedidos'}</div>
+    </div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(r => {
+    const sk = statusKey(r[11]);
+    const realIdx = rows.indexOf(r);
+    return `<tr class="row-enter">
+      <td class="td-data">${r[0] || '—'}</td>
+      <td class="td-pedido">${r[1] || '—'}</td>
+      <td class="td-cliente" title="${r[2] || ''}">${r[2] || '—'}</td>
+      <td style="color:var(--text-muted);font-size:12px">${r[10] || '—'}</td>
+      <td class="td-valor">${fmt(r[9])}</td>
+      <td class="td-frete">${fmt(r[7])}</td>
+      <td><span class="badge ${sk}">${statusLabel(r[11])}</span></td>
+      <td class="td-data">${r[12] || '—'}</td>
+      <td style="color:var(--text-muted);font-size:12px">${r[14] || '—'}</td>
+      <td><button class="btn-edit" onclick="openModalStatus(${realIdx})" title="Alterar status">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      </button></td>
+    </tr>`;
+  }).join('');
+}
+
+function updateStats() {
+  const data = rows.slice(1);
+  document.getElementById('cnt-ag').textContent = data.filter(r => (r[11]||'').toUpperCase().includes('AGUARD')).length;
+  document.getElementById('cnt-cp').textContent = data.filter(r => (r[11]||'').toUpperCase().includes('COMPROV')).length;
+  document.getElementById('cnt-cf').textContent = data.filter(r => (r[11]||'').toUpperCase().includes('CONFIRM')).length;
+  document.getElementById('cnt-bx').textContent = data.filter(r => {
+    const s = (r[11]||'').toUpperCase();
+    return !s.includes('AGUARD') && !s.includes('COMPROV') && !s.includes('CONFIRM') && s.length > 0;
+  }).length;
+}
+
+// ── API SHEETS ──
+async function apiGet(range) {
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(range)}`;
+  const res = await fetch(url, { headers: { Authorization: 'Bearer ' + accessToken } });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}
+
+async function apiUpdate(range, values) {
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`;
+  const res = await fetch(url, {
+    method: 'PUT',
+    headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ values })
+  });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}
+
+async function apiAppend(values) {
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(SHEET_NAME)}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ values })
+  });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}
+
+async function loadSheetData() {
+  if (!accessToken) return;
+  const icon = document.getElementById('refresh-icon');
+  icon.classList.add('spinning');
+  try {
+    const data = await apiGet(SHEET_NAME);
+    rows = data.values || [];
+    updateStats();
+    renderTable();
+    const now = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    document.getElementById('sync-info').textContent = 'Atualizado às ' + now;
+  } catch(e) {
+    toast('Erro ao carregar planilha: ' + e.message, 'error');
+  } finally {
+    icon.classList.remove('spinning');
+  }
+}
+
+// ── MODAL NOVO ──
+function openModalNovo() { document.getElementById('modal-novo').style.display = 'flex'; calcTotal(); }
+function closeModalNovo() {
+  document.getElementById('modal-novo').style.display = 'none';
+  ['f-cliente','f-tel','f-pedido','f-valor','f-frete','f-st','f-sinal','f-credito','f-obs','f-vendedor'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('f-conta').value = '';
+  calcTotal();
+}
+
+async function salvarPedido() {
+  if (!accessToken) { toast('Conecte a planilha primeiro', 'error'); return; }
+  const cliente = document.getElementById('f-cliente').value.trim();
+  const tel = document.getElementById('f-tel').value.trim();
+  const pedido = document.getElementById('f-pedido').value.trim();
+  const valor = parseFloat(document.getElementById('f-valor').value) || 0;
+  if (!cliente || !tel || !pedido || !valor) { toast('Preencha os campos obrigatórios (*)'); return; }
+
+  const frete = parseFloat(document.getElementById('f-frete').value) || 0;
+  const st = parseFloat(document.getElementById('f-st').value) || 0;
+  const sinal = parseFloat(document.getElementById('f-sinal').value) || 0;
+  const credito = parseFloat(document.getElementById('f-credito').value) || 0;
+  const total = valor + frete + st - sinal - credito;
+  const today = new Date().toLocaleDateString('pt-BR');
+
+  const newRow = [
+    today, pedido, cliente,
+    valor.toFixed(2),
+    document.getElementById('f-conta').value,
+    sinal ? sinal.toFixed(2) : '',
+    credito ? credito.toFixed(2) : '',
+    frete ? frete.toFixed(2) : '',
+    st ? st.toFixed(2) : '',
+    total.toFixed(2),
+    tel, 'AGUARDANDO', '', 
+    document.getElementById('f-obs').value,
+    document.getElementById('f-vendedor').value,
+    '', '', '', ''
+  ];
+
+  const btn = document.getElementById('btn-salvar');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  try {
+    await apiAppend([newRow]);
+    closeModalNovo();
+    toast('Pedido salvo! Automação de cobrança será disparada pelo n8n.', 'success');
+    await loadSheetData();
+  } catch(e) {
+    toast('Erro ao salvar: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Salvar na planilha';
+  }
+}
+
+// ── MODAL STATUS ──
+function openModalStatus(rowIdx) {
+  currentEditRow = rowIdx;
+  selectedStatus = null;
+  const r = rows[rowIdx];
+  document.getElementById('ms-titulo').textContent = 'Pedido ' + (r[1] || '');
+  document.getElementById('ms-info').textContent = (r[2] || '') + ' — ' + fmt(r[9]);
+  document.querySelectorAll('.status-opt').forEach(o => o.classList.remove('sel'));
+  const sk = statusKey(r[11]);
+  const map = { ag: 'AGUARDANDO', cp: 'COMPROVANTE', cf: 'CONFIRMADO', bx: 'BAIXADO' };
+  selectStatus(map[sk]);
+  document.getElementById('ms-dtpagto').value = '';
+  document.getElementById('modal-status').style.display = 'flex';
+}
+function closeModalStatus() { document.getElementById('modal-status').style.display = 'none'; }
+
+function selectStatus(s) {
+  selectedStatus = s;
+  document.querySelectorAll('.status-opt').forEach(o => o.classList.remove('sel'));
+  const map = { AGUARDANDO: 'ag', COMPROVANTE: 'cp', CONFIRMADO: 'cf', BAIXADO: 'bx' };
+  document.querySelectorAll('.status-opt.' + (map[s] || '')).forEach(o => o.classList.add('sel'));
+  document.getElementById('dtpagto-wrap').style.display = (s === 'COMPROVANTE') ? 'block' : 'none';
+  if (s === 'COMPROVANTE') {
+    const today = new Date().toISOString().split('T')[0];
+    if (!document.getElementById('ms-dtpagto').value) document.getElementById('ms-dtpagto').value = today;
+  }
+}
+
+async function confirmarStatus() {
+  if (!accessToken) { toast('Conecte a planilha primeiro', 'error'); return; }
+  if (!selectedStatus) { toast('Selecione um status'); return; }
+  const rowIdx = currentEditRow;
+  const sheetRow = rowIdx + 1; // 1-indexed, linha 1 é cabeçalho
+  const btn = document.getElementById('btn-confirmar-status');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+
+  // Monta label completo para a planilha
+  const labelMap = {
+    AGUARDANDO: 'AGUARDANDO',
+    COMPROVANTE: 'COMPROVANTE',
+    CONFIRMADO: 'CONFIRMADO',
+    BAIXADO: 'BAIXADO'
+  };
+
+  try {
+    // Atualiza coluna L (status) — linha sheetRow
+    await apiUpdate(`${SHEET_NAME}!L${sheetRow}`, [[labelMap[selectedStatus]]]);
+
+    // Se comprovante, atualiza coluna M (data pagamento)
+    if (selectedStatus === 'COMPROVANTE') {
+      const dt = document.getElementById('ms-dtpagto').value;
+      if (dt) {
+        const [y,m,d] = dt.split('-');
+        await apiUpdate(`${SHEET_NAME}!M${sheetRow}`, [[`${d}/${m}/${y}`]]);
+        rows[rowIdx][12] = `${d}/${m}/${y}`;
+      }
+    }
+
+    rows[rowIdx][11] = labelMap[selectedStatus];
+    updateStats();
+    renderTable();
+    closeModalStatus();
+    toast('Status atualizado na planilha!', 'success');
+  } catch(e) {
+    toast('Erro ao atualizar: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Confirmar';
+  }
+}
+
+// ── OAUTH ──
+function handleAuth() {
+  if (accessToken && Date.now() < tokenExpiry) {
+    toast('Já conectado. Atualizando dados...'); loadSheetData(); return;
+  }
+  if (CLIENT_ID === 'SEU_CLIENT_ID.apps.googleusercontent.com') {
+    alert('Configure o CLIENT_ID nas primeiras linhas do script.\n\n1. Acesse console.cloud.google.com\n2. Ative Google Sheets API\n3. Crie credencial OAuth 2.0 > Aplicativo da Web\n4. Adicione esta origem às origens JS autorizadas\n5. Cole o Client ID no topo do script');
+    return;
+  }
+  const params = new URLSearchParams({
+    client_id: CLIENT_ID,
+    redirect_uri: location.origin + location.pathname,
+    response_type: 'token',
+    scope: SCOPES,
+    prompt: 'consent'
+  });
+  const popup = window.open('https://accounts.google.com/o/oauth2/v2/auth?' + params, 'oauth', 'width=520,height=640,top=100,left=200');
+  if (!popup) { toast('Popup bloqueado. Permita popups para este site.', 'error'); return; }
+  const check = setInterval(() => {
+    try {
+      if (popup.location.href.includes('access_token')) {
+        const hash = new URLSearchParams(popup.location.hash.slice(1));
+        accessToken = hash.get('access_token');
+        tokenExpiry = Date.now() + parseInt(hash.get('expires_in') || '3600') * 1000;
+        popup.close(); clearInterval(check);
+        onConnected();
+      }
+    } catch(e) {}
+    if (popup.closed) clearInterval(check);
+  }, 500);
+}
+
+function onConnected() {
+  document.getElementById('btn-auth').classList.add('connected');
+  document.getElementById('auth-label').textContent = 'Conectado';
+  document.getElementById('sync-dot').classList.remove('off');
+  loadSheetData();
+  // Sync automático a cada 30 segundos
+  if (syncInterval) clearInterval(syncInterval);
+  syncInterval = setInterval(() => {
+    if (accessToken && Date.now() < tokenExpiry) loadSheetData();
+    else { clearInterval(syncInterval); }
+  }, 30000);
+}
+
+// ── INIT ──
+renderTable();
+</script>
+</body>
+</html>
