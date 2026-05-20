@@ -348,6 +348,7 @@ tbody td { padding: 10px 12px; font-size: 12px; font-weight: 600; color: var(--t
         <button class="chip cp" onclick="setFilter('COMPROVANTE',this,'status')">Comprovante</button>
         <button class="chip cf" onclick="setFilter('CONFIRMADO',this,'status')">Confirmado</button>
         <button class="chip bx" onclick="setFilter('BAIXADO',this,'status')">Baixado</button>
+          <button class="chip" style="background:#FFF7ED;color:#9A3412;border-color:#FED7AA;font-family:Nunito,sans-serif;font-size:11px;font-weight:700;padding:6px 12px;border-radius:20px;cursor:pointer;border-width:1.5px;border-style:solid" onclick="setFilter('SEMSTATUS',this,'status')">Sem status</button>
       </div>
       <div class="filter-sep"></div>
       <!-- FILTROS ENVIO -->
@@ -643,6 +644,7 @@ function renderTable() {
     if (currentFilter==='COMPROVANTE' && !s.includes('COMPROV')) return false;
     if (currentFilter==='CONFIRMADO' && !s.includes('CONFIRM')) return false;
     if (currentFilter==='BAIXADO' && (s.includes('AGUARD')||s.includes('COMPROV')||s.includes('CONFIRM'))) return false;
+    if (currentFilter==='SEMSTATUS' && s.trim() !== '') return false;
     const ek = envKey(r[15]);
     if (currentEnvioFilter==='MANDAE' && ek!=='M') return false;
     if (currentEnvioFilter==='TAXI' && ek!=='T') return false;
@@ -826,15 +828,10 @@ async function salvarPedido() {
   const btn=document.getElementById('btn-salvar');
   btn.disabled=true; btn.textContent='Salvando...';
   try {
-    // 1. Grava a linha completa sem status
-    const result = await apiAppend([newRow]);
-    // 2. Descobre qual linha foi inserida relendo coluna B
-    const colData = await apiGet(`${SHEET_NAME}!B:B`);
-    const targetRow = (colData.values || []).length;
-    // 3. Grava o status por último — isso dispara o n8n
-    await apiUpdate(`${SHEET_NAME}!L${targetRow}`, [['AGUARDANDO PAGAMENTO']]);
+    // Grava linha sem status — status será definido manualmente na edição (dispara n8n)
+    await apiAppend([newRow]);
     closeModalNovo();
-    toast('Pedido salvo! WhatsApp será disparado pelo n8n.','success');
+    toast('Pedido salvo! Defina o status para disparar o WhatsApp.','success');
     await loadSheetData();
   }
   catch(e) { toast('Erro ao salvar: '+e.message,'error'); }
@@ -851,7 +848,13 @@ function openModalStatus(rowIdx) {
   document.getElementById('ms-info').textContent=(r[2]||'')+' — '+fmt(r[9]);
   document.querySelectorAll('.status-opt').forEach(o=>o.classList.remove('sel'));
   const map={ag:'AGUARDANDO',cp:'COMPROVANTE',cf:'CONFIRMADO',bx:'BAIXADO'};
-  selectStatus(map[statusKey(r[11])]);
+  if (r[11] && r[11].toString().trim() !== '') {
+    selectStatus(map[statusKey(r[11])]);
+  } else {
+    selectedStatus = null;
+    document.querySelectorAll('.status-opt').forEach(o=>o.classList.remove('sel'));
+    document.getElementById('dtpagto-wrap').style.display='none';
+  }
   document.getElementById('ms-dtpagto').value='';
   if (r[12]) { const p=r[12].split('/'); if(p.length===3) document.getElementById('ms-dtpagto').value=`${p[2]}-${p[1]}-${p[0]}`; }
   // Enviado
