@@ -362,6 +362,7 @@ tbody td { padding: 10px 12px; font-size: 12px; font-weight: 600; color: var(--t
         <table>
           <thead>
             <tr>
+              <th></th>
               <th onclick="sortBy(0)">Data</th>
               <th onclick="sortBy(1)">Pedido</th>
               <th onclick="sortBy(2)">Cliente</th>
@@ -381,7 +382,6 @@ tbody td { padding: 10px 12px; font-size: 12px; font-weight: 600; color: var(--t
               <th onclick="sortBy(16)">1ª Notif.</th>
               <th onclick="sortBy(17)">2ª Notif.</th>
               <th onclick="sortBy(18)">3ª Notif.</th>
-              <th></th>
             </tr>
           </thead>
           <tbody id="tbody"></tbody>
@@ -540,8 +540,13 @@ function toast(msg, type='', dur=3000) {
   setTimeout(() => { el.style.opacity='0'; el.style.transition='opacity 0.3s'; setTimeout(()=>el.remove(),400); }, dur);
 }
 
+function parseBRL(v) {
+  if (v === null || v === undefined || v === '') return NaN;
+  const s = v.toString().replace(/R\$\s*/g,'').replace(/\./g,'').replace(',','.').trim();
+  return parseFloat(s);
+}
 function fmt(v) {
-  const n = parseFloat(v);
+  const n = parseBRL(v);
   if (isNaN(n)) return '—';
   return 'R$ ' + n.toLocaleString('pt-BR', { minimumFractionDigits:2, maximumFractionDigits:2 });
 }
@@ -593,7 +598,6 @@ function calcTotalEdit() {
   const t = v+fr+st-sn-cr;
   document.getElementById('ms-total-preview').textContent = t > 0 ? fmt(t) : '—';
 }
-
 // ── SORT ──
 function sortBy(col) {
   const ths = document.querySelectorAll('thead th');
@@ -644,7 +648,7 @@ function renderTable() {
   if (sortCol >= 0) {
     filtered.sort((a,b) => {
       let av = a[sortCol]||'', bv = b[sortCol]||'';
-      const an = parseFloat(av), bn = parseFloat(bv);
+      const an = parseBRL(av), bn = parseBRL(bv);
       if (!isNaN(an) && !isNaN(bn)) return (an-bn)*sortDir;
       return av.toString().localeCompare(bv.toString(),'pt-BR')*sortDir;
     });
@@ -669,6 +673,9 @@ function renderTable() {
     const ek = envKey(r[15]);
     const envBadge = ek ? `<span class="env-badge env-${ek}">${ek2label[ek]}</span>` : '<span class="notif-empty">—</span>';
     return `<tr>
+      <td><button class="btn-edit" onclick="openModalStatus(${realIdx})" title="Editar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      </button></td>
       <td class="td-muted">${r[0]||'—'}</td>
       <td class="td-pedido">${r[1]||'—'}</td>
       <td class="td-cliente" title="${r[2]||''}">${r[2]||'—'}</td>
@@ -688,9 +695,6 @@ function renderTable() {
       <td style="text-align:center">${notifCell(r[16])}</td>
       <td style="text-align:center">${notifCell(r[17])}</td>
       <td style="text-align:center">${notifCell(r[18])}</td>
-      <td><button class="btn-edit" onclick="openModalStatus(${realIdx})" title="Editar">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-      </button></td>
     </tr>`;
   }).join('');
 }
@@ -698,7 +702,7 @@ function renderTable() {
 function updateStats() {
   const data = rows.slice(1);
   const cnt = key => data.filter(r => statusKey(r[11])===key).length;
-  const sum = key => data.filter(r => statusKey(r[11])===key).reduce((a,r)=>a+(parseFloat(r[9])||0),0);
+  const sum = key => data.filter(r => statusKey(r[11])===key).reduce((a,r)=>a+(parseBRL(r[9])||0),0);
   document.getElementById('cnt-ag').textContent = cnt('ag');
   document.getElementById('cnt-cp').textContent = cnt('cp');
   document.getElementById('cnt-cf').textContent = cnt('cf');
@@ -796,7 +800,7 @@ async function salvarPedido() {
 }
 
 // ── MODAL STATUS ──
-function parseVal(v) { if (!v) return ''; const n=parseFloat(v.toString().replace('R$','').replace(/\./g,'').replace(',','.')); return isNaN(n)?'':n.toFixed(2); }
+function parseVal(v) { const n = parseBRL(v); return isNaN(n) ? '' : n.toFixed(2); }
 
 function openModalStatus(rowIdx) {
   currentEditRow=rowIdx; selectedStatus=null;
