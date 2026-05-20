@@ -721,13 +721,13 @@ function fecharSenha() { document.getElementById('modal-senha').style.display = 
 function confirmarSenha() {
   const v = document.getElementById('senha-input').value;
   if (v !== SENHA) { toast('Senha incorreta', 'error'); document.getElementById('senha-input').value=''; return; }
+  const target = senhaTarget;
   fecharSenha();
-  if (!senhaTarget) return;
-  const el = document.getElementById('val-'+senhaTarget);
-  const total = (window._totais||{})[senhaTarget] || 0;
+  if (!target) return;
+  const el = document.getElementById('val-'+target);
+  const total = (window._totais||{})[target] || 0;
   el.textContent = fmt(total);
   el.classList.add('visible');
-  // Esconde após 15 segundos
   setTimeout(() => el.classList.remove('visible'), 15000);
 }
 
@@ -745,9 +745,14 @@ async function apiUpdate(range, values) {
   return res.json();
 }
 async function apiAppend(values) {
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(SHEET_NAME)}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;
-  const res = await fetch(url, { method:'POST', headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'}, body:JSON.stringify({values}) });
-  if (!res.ok) throw new Error('HTTP '+res.status);
+  // Encontra a primeira linha vazia pela coluna B (PEDIDO)
+  const colData = await apiGet(`${SHEET_NAME}!B:B`);
+  const colB = colData.values || [];
+  const targetRow = colB.length + 1;
+  const range = `${SHEET_NAME}!A${targetRow}`;
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`;
+  const res = await fetch(url, { method:"PUT", headers:{Authorization:"Bearer "+accessToken,"Content-Type":"application/json"}, body:JSON.stringify({values}) });
+  if (!res.ok) throw new Error("HTTP "+res.status);
   return res.json();
 }
 async function apiBatch(data) {
@@ -791,7 +796,7 @@ async function salvarPedido() {
   const credito=parseFloat(document.getElementById('f-credito').value)||0;
   const total=valor+frete+st-sinal-credito;
   const today=new Date().toLocaleDateString('pt-BR');
-  const newRow=[today,pedido,cliente,valor.toFixed(2),document.getElementById('f-conta').value,sinal?sinal.toFixed(2):'',credito?credito.toFixed(2):'',frete?frete.toFixed(2):'',st?st.toFixed(2):'',total.toFixed(2),tel,'AGUARDANDO','',document.getElementById('f-obs').value,document.getElementById('f-vendedor').value,'','','',''];
+  const newRow=[today,pedido,cliente,valor.toFixed(2),document.getElementById('f-conta').value,sinal?sinal.toFixed(2):'',credito?credito.toFixed(2):'',frete?frete.toFixed(2):'',st?st.toFixed(2):'',total.toFixed(2),tel,'AGUARDANDO PAGAMENTO','',document.getElementById('f-obs').value,document.getElementById('f-vendedor').value,'','','',''];
   const btn=document.getElementById('btn-salvar');
   btn.disabled=true; btn.textContent='Salvando...';
   try { await apiAppend([newRow]); closeModalNovo(); toast('Pedido salvo! Automação de cobrança disparada.','success'); await loadSheetData(); }
@@ -847,7 +852,7 @@ async function confirmarStatus() {
   const rowIdx=currentEditRow; const sheetRow=rowIdx+1;
   const btn=document.getElementById('btn-confirmar-status');
   btn.disabled=true; btn.textContent='Salvando...';
-  const labelMap={AGUARDANDO:'AGUARDANDO',COMPROVANTE:'COMPROVANTE',CONFIRMADO:'CONFIRMADO',BAIXADO:'BAIXADO'};
+  const labelMap={AGUARDANDO:'AGUARDANDO PAGAMENTO',COMPROVANTE:'COMPROVANTE',CONFIRMADO:'CONFIRMADO',BAIXADO:'BAIXADO'};
   try {
     const updates=[];
     updates.push({range:`${SHEET_NAME}!L${sheetRow}`,values:[[labelMap[selectedStatus]]]});
