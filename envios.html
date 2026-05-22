@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Afife — Envios Mandaê</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --red: #D32B1E; --red-dark: #A82015; --red-light: #F5E8E7;
+  --yellow: #F5E642; --white: #FFFFFF; --off-white: #FDF8F8;
+  --gray-50: #F9F5F5; --gray-100: #F0E8E8; --gray-200: #E0D0D0;
+  --gray-400: #B08080; --gray-800: #3D2020;
+  --text-main: #1A0A0A; --text-muted: #7A5050; --text-light: #B08080;
+  --blue: #0369A1; --blue-light: #E0F2FE;
+  --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px; --radius-xl: 24px;
+  --shadow-sm: 0 1px 3px rgba(211,43,30,0.08);
+  --shadow-md: 0 4px 16px rgba(211,43,30,0.12);
+  --shadow-lg: 0 8px 32px rgba(211,43,30,0.18);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body { font-family: 'Nunito', sans-serif; background: var(--gray-50); color: var(--text-main); font-size: 14px; }
+.app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+/* ── TOPBAR ── */
+.topbar {
+  background: var(--red); flex-shrink: 0;
+  padding: 0 24px; height: 60px;
+  display: flex; align-items: center; gap: 14px;
+}
+.logo { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+.logo-text { font-size: 24px; font-weight: 800; color: var(--white); letter-spacing: -0.5px; }
+.logo-star { font-size: 16px; }
+.logo-div { width: 1px; height: 28px; background: rgba(255,255,255,0.25); margin: 0 4px; }
+.page-title { font-size: 14px; font-weight: 700; color: rgba(255,255,255,0.85); flex: 1; }
+.page-title span { color: var(--yellow); }
+.nav-tabs { display: flex; gap: 4px; }
+.nav-tab {
+  padding: 6px 14px; border-radius: var(--radius-md);
+  font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.15s;
+  border: 1px solid rgba(255,255,255,0.25); color: rgba(255,255,255,0.75);
+  background: rgba(255,255,255,0.1); text-decoration: none; display: flex; align-items: center; gap: 5px;
+}
+.nav-tab:hover { background: rgba(255,255,255,0.2); color: var(--white); }
+.nav-tab.active { background: var(--yellow); color: var(--red-dark); border-color: var(--yellow); }
+.btn-config-top {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 14px; border-radius: var(--radius-md);
+  background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
+  color: var(--white); font-size: 12px; font-weight: 700; cursor: pointer;
+  transition: all 0.15s; font-family: 'Nunito', sans-serif; white-space: nowrap;
+}
+.btn-config-top:hover { background: rgba(255,255,255,0.25); }
+.btn-config-top.configured { background: rgba(245,230,66,0.2); border-color: rgba(245,230,66,0.5); color: var(--yellow); }
+.btn-auth-top {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 14px; border-radius: var(--radius-md);
+  background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
+  color: var(--white); font-size: 12px; font-weight: 700; cursor: pointer;
+  transition: all 0.15s; font-family: 'Nunito', sans-serif; white-space: nowrap;
+}
+.btn-auth-top:hover { background: rgba(255,255,255,0.25); }
+.btn-auth-top.connected { background: rgba(245,230,66,0.2); border-color: rgba(245,230,66,0.5); color: var(--yellow); }
+.sync-dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,0.4); flex-shrink: 0; }
+.sync-dot.on { background: var(--yellow); }
+
+/* ── CONTENT ── */
+.content { flex: 1; overflow-y: auto; padding: 20px 24px; display: flex; flex-direction: column; gap: 16px; }
+
+/* ── SECTION HEADER ── */
+.section-label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.6px; color: var(--text-light); margin-bottom: 10px;
+}
+
+/* ── CARDS ── */
+.card {
+  background: var(--white); border-radius: var(--radius-lg);
+  border: 1px solid var(--gray-200); padding: 18px 20px;
+  box-shadow: var(--shadow-sm);
+}
+.card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.card-title {
+  font-size: 13px; font-weight: 800; color: var(--text-main);
+  display: flex; align-items: center; gap: 8px;
+}
+.card-title-icon {
+  width: 28px; height: 28px; border-radius: var(--radius-sm);
+  background: var(--red-light); display: flex; align-items: center; justify-content: center;
+}
+.card-title-icon svg { width: 14px; height: 14px; color: var(--red); }
+
+/* ── GRID LAYOUT ── */
+.main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.full-width { grid-column: 1 / -1; }
+
+/* ── FORM ELEMENTS ── */
+.form-row { display: grid; gap: 10px; }
+.form-row.cols-2 { grid-template-columns: 1fr 1fr; }
+.form-row.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+.form-row.cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+.field label {
+  display: block; font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  color: var(--text-light); margin-bottom: 5px;
+}
+.field input, .field select {
+  width: 100%; padding: 8px 10px;
+  border: 1.5px solid var(--gray-200); border-radius: var(--radius-md);
+  background: var(--white); color: var(--text-main);
+  font-size: 13px; font-family: 'Nunito', sans-serif; font-weight: 600;
+  transition: border-color 0.15s;
+}
+.field input:focus, .field select:focus {
+  outline: none; border-color: var(--red);
+  box-shadow: 0 0 0 3px rgba(211,43,30,0.1);
+}
+.field input::placeholder { color: var(--text-light); }
+.hint { font-size: 11px; color: var(--text-light); margin-top: 4px; font-weight: 600; }
+
+/* ── BUTTONS ── */
+.btn-primary {
+  display: flex; align-items: center; gap: 6px;
+  padding: 9px 20px; border-radius: var(--radius-md);
+  background: var(--red); border: none; color: var(--white);
+  font-size: 13px; font-weight: 800; cursor: pointer;
+  transition: all 0.15s; font-family: 'Nunito', sans-serif;
+}
+.btn-primary:hover:not(:disabled) { background: var(--red-dark); transform: translateY(-1px); }
+.btn-primary:disabled { background: var(--gray-400); cursor: not-allowed; }
+.btn-secondary {
+  display: flex; align-items: center; gap: 6px;
+  padding: 9px 18px; border-radius: var(--radius-md);
+  background: var(--white); border: 1.5px solid var(--gray-200);
+  color: var(--text-muted); font-size: 13px; font-weight: 700;
+  cursor: pointer; transition: all 0.15s; font-family: 'Nunito', sans-serif;
+}
+.btn-secondary:hover { background: var(--gray-50); border-color: var(--gray-400); }
+.btn-yellow {
+  display: flex; align-items: center; gap: 6px;
+  padding: 9px 20px; border-radius: var(--radius-md);
+  background: var(--yellow); border: none; color: var(--red-dark);
+  font-size: 13px; font-weight: 800; cursor: pointer;
+  transition: all 0.15s; font-family: 'Nunito', sans-serif;
+}
+.btn-yellow:hover:not(:disabled) { background: #ede022; transform: translateY(-1px); }
+.btn-yellow:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-sm {
+  padding: 6px 12px; font-size: 11px; gap: 4px;
+}
+.btn-sm svg { width: 12px; height: 12px; }
+.btn-primary svg, .btn-secondary svg, .btn-yellow svg { width: 14px; height: 14px; }
+
+/* ── COTAÇÃO RESULTADO ── */
+.cotacao-resultado {
+  margin-top: 14px; display: none;
+}
+.cotacao-resultado.visible { display: block; }
+.cotacao-options { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
+.cotacao-option {
+  border: 2px solid var(--gray-200); border-radius: var(--radius-md);
+  padding: 12px 14px; cursor: pointer; transition: all 0.15s;
+  background: var(--white);
+}
+.cotacao-option:hover { border-color: var(--blue); background: var(--blue-light); }
+.cotacao-option.selected { border-color: var(--blue); background: var(--blue-light); }
+.cotacao-service { font-size: 12px; font-weight: 800; color: var(--text-main); }
+.cotacao-price { font-size: 20px; font-weight: 800; color: var(--blue); margin: 2px 0; }
+.cotacao-days { font-size: 11px; color: var(--text-muted); font-weight: 600; }
+.cotacao-empty { text-align: center; padding: 20px; color: var(--text-light); font-size: 12px; font-weight: 600; }
+
+/* ── RASTREAMENTO ── */
+.tracking-result { margin-top: 14px; display: none; }
+.tracking-result.visible { display: block; }
+.tracking-header {
+  background: var(--blue-light); border-radius: var(--radius-md);
+  padding: 12px 14px; margin-bottom: 12px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.tracking-code { font-size: 13px; font-weight: 800; color: var(--blue); }
+.tracking-status-badge {
+  padding: 4px 10px; border-radius: 20px;
+  font-size: 11px; font-weight: 700;
+}
+.tracking-timeline { display: flex; flex-direction: column; gap: 0; }
+.timeline-item {
+  display: flex; gap: 12px; padding: 8px 0;
+  border-left: 2px solid var(--gray-200); margin-left: 8px;
+  padding-left: 16px; position: relative;
+}
+.timeline-item::before {
+  content: ''; position: absolute; left: -6px; top: 14px;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--gray-200); border: 2px solid var(--white);
+}
+.timeline-item.current::before { background: var(--blue); }
+.timeline-item:last-child { border-left: 2px solid transparent; }
+.timeline-date { font-size: 11px; color: var(--text-light); font-weight: 600; min-width: 100px; }
+.timeline-desc { font-size: 12px; font-weight: 700; color: var(--text-main); }
+.timeline-local { font-size: 11px; color: var(--text-muted); font-weight: 600; }
+
+/* ── TABELA HISTÓRICO ── */
+.table-card {
+  background: var(--white); border-radius: var(--radius-lg);
+  border: 1px solid var(--gray-200); overflow: hidden; box-shadow: var(--shadow-sm);
+}
+.table-wrap { overflow-x: auto; }
+.table-wrap::-webkit-scrollbar { height: 6px; }
+.table-wrap::-webkit-scrollbar-track { background: var(--gray-100); }
+.table-wrap::-webkit-scrollbar-thumb { background: var(--gray-400); border-radius: 3px; }
+table { width: 100%; border-collapse: collapse; min-width: 800px; }
+thead th {
+  padding: 10px 12px; text-align: left;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase;
+  color: var(--text-light); background: var(--gray-50);
+  border-bottom: 1px solid var(--gray-200); white-space: nowrap;
+}
+tbody tr { border-bottom: 1px solid var(--gray-100); transition: background 0.1s; }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: var(--off-white); }
+tbody td { padding: 10px 12px; font-size: 12px; font-weight: 600; color: var(--text-main); white-space: nowrap; }
+.td-pedido { font-weight: 800; color: var(--red) !important; }
+.td-muted { color: var(--text-muted) !important; font-size: 11px !important; }
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 8px; border-radius: 20px; font-size: 10px; font-weight: 700;
+}
+.badge::before { content:''; width:5px; height:5px; border-radius:50%; flex-shrink:0; }
+.badge.entregue { background:#ECFDF5; color:#065F46; } .badge.entregue::before { background:#059669; }
+.badge.transito { background:#E0F2FE; color:#0369A1; } .badge.transito::before { background:#0369A1; }
+.badge.postado { background:#FFFBEB; color:#92400E; } .badge.postado::before { background:#D97706; }
+.badge.pendente { background:#F9FAFB; color:#374151; } .badge.pendente::before { background:#9CA3AF; }
+.badge.erro { background:#FEF2F2; color:#991B1B; } .badge.erro::before { background:#DC2626; }
+.btn-rastrear-inline {
+  width: 28px; height: 28px; border-radius: var(--radius-sm);
+  background: var(--blue-light); border: 1px solid #BAE6FD;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.btn-rastrear-inline:hover { background: var(--blue); }
+.btn-rastrear-inline svg { width: 12px; height: 12px; color: var(--blue); }
+.btn-rastrear-inline:hover svg { color: var(--white); }
+.table-footer { padding: 8px 14px; background: var(--gray-50); border-top: 1px solid var(--gray-100); font-size: 11px; color: var(--text-light); font-weight: 700; }
+
+/* ── FILTERS HISTORICO ── */
+.filters-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+.search-wrap { position: relative; flex: 1; min-width: 180px; max-width: 260px; }
+.search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; color: var(--text-light); pointer-events: none; }
+.search-input {
+  width: 100%; padding: 8px 10px 8px 32px;
+  border: 1px solid var(--gray-200); border-radius: var(--radius-md);
+  background: var(--white); color: var(--text-main);
+  font-size: 13px; font-family: 'Nunito', sans-serif; font-weight: 600;
+}
+.search-input:focus { outline: none; border-color: var(--red); box-shadow: 0 0 0 3px rgba(211,43,30,0.1); }
+.search-input::placeholder { color: var(--text-light); }
+.filter-chips { display: flex; gap: 5px; flex-wrap: wrap; }
+.chip {
+  padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 700;
+  cursor: pointer; transition: all 0.15s; border: 1.5px solid transparent;
+  font-family: 'Nunito', sans-serif; white-space: nowrap; background: none;
+}
+.chip.all { background: var(--gray-100); color: var(--text-muted); border-color: var(--gray-200); }
+.chip.all.active { background: var(--red); color: var(--white); border-color: var(--red); }
+.chip.entregue { background:#ECFDF5; color:#065F46; border-color:#A7F3D0; }
+.chip.entregue.active { background:#059669; color:white; border-color:#059669; }
+.chip.transito { background:#E0F2FE; color:#0369A1; border-color:#BAE6FD; }
+.chip.transito.active { background:#0369A1; color:white; border-color:#0369A1; }
+.chip.postado { background:#FFFBEB; color:#92400E; border-color:#FDE68A; }
+.chip.postado.active { background:#D97706; color:white; border-color:#D97706; }
+.chip.pendente { background:#F9FAFB; color:#374151; border-color:#E5E7EB; }
+.chip.pendente.active { background:#6B7280; color:white; border-color:#6B7280; }
+
+/* ── ETIQUETA ── */
+.etiqueta-result { margin-top: 14px; display: none; }
+.etiqueta-result.visible { display: block; }
+.etiqueta-success {
+  background: #ECFDF5; border: 1px solid #A7F3D0;
+  border-radius: var(--radius-md); padding: 14px 16px;
+}
+.etiqueta-success-icon { font-size: 20px; margin-bottom: 6px; }
+.etiqueta-success-title { font-size: 13px; font-weight: 800; color: #065F46; margin-bottom: 4px; }
+.etiqueta-tracking { font-size: 14px; font-weight: 800; color: var(--blue); margin-bottom: 8px; font-family: monospace; }
+.etiqueta-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.etiqueta-error {
+  background: #FEF2F2; border: 1px solid #FECACA;
+  border-radius: var(--radius-md); padding: 14px 16px;
+}
+.etiqueta-error-title { font-size: 13px; font-weight: 800; color: #991B1B; margin-bottom: 4px; }
+.etiqueta-error-msg { font-size: 12px; color: #B91C1C; font-weight: 600; }
+
+/* ── TOAST ── */
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--gray-800); color: var(--white); padding: 10px 20px; border-radius: var(--radius-lg); font-size: 13px; font-weight: 700; z-index: 9999; box-shadow: var(--shadow-lg); }
+.toast.success { background: #065F46; }
+.toast.error { background: #991B1B; }
+
+/* ── MODAL ── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(26,10,10,0.5);
+  display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px;
+  animation: fadeIn 0.15s ease;
+}
+.modal {
+  background: var(--white); border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg); width: 520px; max-width: 100%; max-height: 90vh; overflow-y: auto;
+}
+.modal-header {
+  background: var(--red); padding: 18px 22px;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.modal-header h2 { font-size: 15px; font-weight: 800; color: var(--white); }
+.modal-header .modal-sub { font-size: 11px; color: rgba(255,255,255,0.7); font-weight: 600; margin-top: 2px; }
+.btn-close { width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.15); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
+.btn-close:hover { background: rgba(255,255,255,0.25); }
+.btn-close svg { width: 13px; height: 13px; color: var(--white); }
+.modal-body { padding: 20px 22px; }
+.modal-footer { padding: 0 22px 20px; display: flex; gap: 8px; justify-content: flex-end; }
+.btn-cancel { padding: 9px 18px; border-radius: var(--radius-md); border: 1.5px solid var(--gray-200); background: var(--white); color: var(--text-muted); font-size: 13px; font-weight: 700; cursor: pointer; font-family: 'Nunito', sans-serif; }
+.btn-save { padding: 9px 22px; border-radius: var(--radius-md); background: var(--red); border: none; color: var(--white); font-size: 13px; font-weight: 800; cursor: pointer; font-family: 'Nunito', sans-serif; }
+.btn-save:hover { background: var(--red-dark); }
+
+/* ── CONFIG PAINEL ── */
+.config-note {
+  background: #FFFBEB; border: 1px solid #FDE68A;
+  border-radius: var(--radius-md); padding: 10px 14px;
+  font-size: 11px; font-weight: 600; color: #92400E; margin-top: 10px;
+  line-height: 1.6;
+}
+.config-note strong { color: #78350F; }
+.divider { height: 1px; background: var(--gray-100); margin: 14px 0; }
+.section-title-sm { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-light); margin-bottom: 8px; }
+.spinner { display:inline-block; width:16px; height:16px; border:2px solid rgba(255,255,255,0.3); border-top-color:var(--white); border-radius:50%; animation:spin 0.7s linear infinite; vertical-align:-3px; margin-right:6px; }
+.spinner-red { border: 2px solid var(--gray-200); border-top-color: var(--red); }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+
+/* ── STATUS ENVIO ── */
+.status-envio-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+.stat-envio {
+  background: var(--white); border-radius: var(--radius-lg);
+  border: 1px solid var(--gray-200); padding: 14px 16px;
+  box-shadow: var(--shadow-sm); position: relative; overflow: hidden;
+  transition: transform 0.15s;
+}
+.stat-envio::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+.stat-envio.total::before { background: var(--red); }
+.stat-envio.transito::before { background: var(--blue); }
+.stat-envio.entregue::before { background: #059669; }
+.stat-envio.pendente::before { background: #D97706; }
+.stat-envio:hover { transform: translateY(-2px); }
+.stat-envio-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-light); margin-bottom: 4px; }
+.stat-envio-value { font-size: 26px; font-weight: 800; }
+.stat-envio.total .stat-envio-value { color: var(--red); }
+.stat-envio.transito .stat-envio-value { color: var(--blue); }
+.stat-envio.entregue .stat-envio-value { color: #059669; }
+.stat-envio.pendente .stat-envio-value { color: #D97706; }
+
+/* ── EMPTY ── */
+.empty-state { padding: 40px 24px; text-align: center; }
+.empty-icon { width: 44px; height: 44px; border-radius: 50%; background: var(--red-light); display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; }
+.empty-icon svg { width: 20px; height: 20px; color: var(--red); }
+.empty-title { font-size: 14px; font-weight: 800; margin-bottom: 4px; }
+.empty-sub { font-size: 12px; color: var(--text-muted); font-weight: 600; }
+
+/* ── LOADING OVERLAY ── */
+.loading-row td { text-align: center; padding: 30px; color: var(--text-muted); font-size: 12px; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="logo">
+      <span class="logo-text">Afife</span>
+      <span class="logo-star">⭐</span>
+    </div>
+    <div class="logo-div"></div>
+    <div class="page-title">Gestão de <span>Envios</span></div>
+    <nav class="nav-tabs">
+      <a class="nav-tab" href="index.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"/></svg>
+        Pedidos
+      </a>
+      <a class="nav-tab active" href="envios.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        Envios
+      </a>
+    </nav>
+    <button class="btn-config-top" id="btn-config" onclick="openModalConfig()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93A10 10 0 0 0 4.93 19.07M19.07 4.93l-3.75 3.75"/></svg>
+      <span id="config-label">Configurar n8n</span>
+    </button>
+    <button class="btn-auth-top" id="btn-auth" onclick="handleAuth()">
+      <div class="sync-dot" id="sync-dot"></div>
+      <span id="auth-label">Conectar planilha</span>
+    </button>
+  </header>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- STATS ENVIOS -->
+    <div class="status-envio-grid">
+      <div class="stat-envio total">
+        <div class="stat-envio-label">Total Mandaê</div>
+        <div class="stat-envio-value" id="cnt-total">—</div>
+      </div>
+      <div class="stat-envio transito">
+        <div class="stat-envio-label">Em trânsito</div>
+        <div class="stat-envio-value" id="cnt-transito">—</div>
+      </div>
+      <div class="stat-envio entregue">
+        <div class="stat-envio-label">Entregues</div>
+        <div class="stat-envio-value" id="cnt-entregue">—</div>
+      </div>
+      <div class="stat-envio pendente">
+        <div class="stat-envio-label">Sem tracking</div>
+        <div class="stat-envio-value" id="cnt-pendente">—</div>
+      </div>
+    </div>
+
+    <!-- GRID PRINCIPAL -->
+    <div class="main-grid">
+
+      <!-- COTAÇÃO DE FRETE -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <div class="card-title-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+            Cotar Frete
+          </div>
+        </div>
+        <div class="form-row cols-2" style="margin-bottom:10px">
+          <div class="field">
+            <label>CEP Destino *</label>
+            <input id="cot-cep" type="text" placeholder="00000-000" maxlength="9" oninput="formatCEP(this)"/>
+          </div>
+          <div class="field">
+            <label>Peso (gramas) *</label>
+            <input id="cot-peso" type="number" min="1" placeholder="500"/>
+          </div>
+        </div>
+        <div class="form-row cols-3" style="margin-bottom:10px">
+          <div class="field">
+            <label>Largura (cm)</label>
+            <input id="cot-largura" type="number" min="1" placeholder="15"/>
+          </div>
+          <div class="field">
+            <label>Altura (cm)</label>
+            <input id="cot-altura" type="number" min="1" placeholder="10"/>
+          </div>
+          <div class="field">
+            <label>Comprimento (cm)</label>
+            <input id="cot-comprimento" type="number" min="1" placeholder="20"/>
+          </div>
+        </div>
+        <div class="field" style="margin-bottom:12px">
+          <label>Valor Declarado (R$)</label>
+          <input id="cot-valor" type="number" step="0.01" min="0" placeholder="0.00"/>
+          <div class="hint">Opcional — para seguro do envio</div>
+        </div>
+        <button class="btn-primary" id="btn-cotar" onclick="cotar()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+          Calcular frete
+        </button>
+
+        <div class="cotacao-resultado" id="cotacao-resultado">
+          <div class="divider"></div>
+          <div class="section-title-sm">Opções disponíveis — clique para selecionar</div>
+          <div class="cotacao-options" id="cotacao-options"></div>
+        </div>
+      </div>
+
+      <!-- CRIAR PEDIDO / ETIQUETA -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <div class="card-title-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div>
+            Criar Etiqueta
+          </div>
+        </div>
+
+        <div class="form-row cols-2" style="margin-bottom:10px">
+          <div class="field">
+            <label>Pedido (ref.)</label>
+            <input id="et-pedido" type="text" placeholder="39468503"/>
+          </div>
+          <div class="field">
+            <label>Serviço *</label>
+            <select id="et-servico">
+              <option value="">Cotar primeiro →</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="section-title-sm">Destinatário</div>
+        <div class="form-row cols-2" style="margin-bottom:10px">
+          <div class="field">
+            <label>Nome completo *</label>
+            <input id="et-nome" type="text" placeholder="João da Silva"/>
+          </div>
+          <div class="field">
+            <label>CPF / CNPJ</label>
+            <input id="et-doc" type="text" placeholder="000.000.000-00"/>
+          </div>
+          <div class="field">
+            <label>Telefone</label>
+            <input id="et-tel" type="text" placeholder="11999999999"/>
+          </div>
+          <div class="field">
+            <label>Email</label>
+            <input id="et-email" type="text" placeholder="cliente@email.com"/>
+          </div>
+        </div>
+
+        <div class="section-title-sm">Endereço</div>
+        <div class="form-row" style="margin-bottom:10px">
+          <div class="field">
+            <label>Logradouro *</label>
+            <input id="et-rua" type="text" placeholder="Rua das Flores"/>
+          </div>
+        </div>
+        <div class="form-row cols-3" style="margin-bottom:10px">
+          <div class="field">
+            <label>Número *</label>
+            <input id="et-num" type="text" placeholder="123"/>
+          </div>
+          <div class="field">
+            <label>Complemento</label>
+            <input id="et-comp" type="text" placeholder="Apto 4"/>
+          </div>
+          <div class="field">
+            <label>CEP *</label>
+            <input id="et-cep" type="text" placeholder="00000-000" maxlength="9" oninput="formatCEP(this); buscarCEP(this.value)"/>
+          </div>
+        </div>
+        <div class="form-row cols-3" style="margin-bottom:12px">
+          <div class="field">
+            <label>Bairro *</label>
+            <input id="et-bairro" type="text" placeholder="Centro"/>
+          </div>
+          <div class="field">
+            <label>Cidade *</label>
+            <input id="et-cidade" type="text" placeholder="São Paulo"/>
+          </div>
+          <div class="field">
+            <label>Estado *</label>
+            <input id="et-estado" type="text" placeholder="SP" maxlength="2"/>
+          </div>
+        </div>
+
+        <div class="field" style="margin-bottom:12px">
+          <label>Descrição do conteúdo *</label>
+          <input id="et-descricao" type="text" placeholder="Cosméticos e acessórios"/>
+        </div>
+
+        <button class="btn-yellow" id="btn-criar-etiqueta" onclick="criarEtiqueta()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+          Gerar etiqueta
+        </button>
+
+        <div class="etiqueta-result" id="etiqueta-result"></div>
+      </div>
+
+      <!-- RASTREAMENTO -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <div class="card-title-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 14 8 14s8-8.75 8-14a8 8 0 0 0-8-8z"/></svg></div>
+            Rastrear Envio
+          </div>
+        </div>
+        <div class="form-row cols-2" style="margin-bottom:12px; align-items: flex-end;">
+          <div class="field">
+            <label>Código de Rastreio *</label>
+            <input id="track-codigo" type="text" placeholder="23A6BKMQ313M0" style="font-family:monospace;letter-spacing:1px" onkeydown="if(event.key==='Enter')rastrear()"/>
+          </div>
+          <button class="btn-primary" id="btn-rastrear" onclick="rastrear()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 21l-4.35-4.35"/><circle cx="11" cy="11" r="7"/></svg>
+            Rastrear
+          </button>
+        </div>
+
+        <div class="tracking-result" id="tracking-result">
+          <div class="tracking-header">
+            <span class="tracking-code" id="track-code-display">—</span>
+            <span class="tracking-status-badge" id="track-status-badge">—</span>
+          </div>
+          <div class="tracking-timeline" id="tracking-timeline"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- HISTÓRICO DE ENVIOS -->
+    <div>
+      <div class="card-header" style="margin-bottom:10px">
+        <div style="font-size:15px;font-weight:800">Histórico de Envios Mandaê</div>
+        <button class="btn-secondary btn-sm" onclick="loadSheetData()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v5h5M20 20v-5h-5"/><path d="M4 9a8 8 0 0 1 14.93-2M20 15a8 8 0 0 1-14.93 2"/></svg>
+          Atualizar
+        </button>
+      </div>
+
+      <div class="filters-row">
+        <div class="search-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input class="search-input" id="search" type="text" placeholder="Buscar cliente, pedido, tracking..." oninput="renderHistorico()"/>
+        </div>
+        <div class="filter-chips">
+          <button class="chip all active" onclick="setChip('all',this)">Todos</button>
+          <button class="chip entregue" onclick="setChip('entregue',this)">Entregues</button>
+          <button class="chip transito" onclick="setChip('transito',this)">Em trânsito</button>
+          <button class="chip postado" onclick="setChip('postado',this)">Postados</button>
+          <button class="chip pendente" onclick="setChip('pendente',this)">Sem tracking</button>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Pedido</th>
+                <th>Cliente</th>
+                <th>Telefone</th>
+                <th>Código Rastreio</th>
+                <th>Status Entrega</th>
+                <th>Vendedor</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-historico"></tbody>
+          </table>
+        </div>
+        <div class="table-footer" id="footer-historico">Conecte a planilha para ver o histórico</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL CONFIGURAÇÃO N8N -->
+<div class="modal-overlay" id="modal-config" style="display:none" onclick="if(event.target===this)closeModalConfig()">
+  <div class="modal">
+    <div class="modal-header">
+      <div><h2>Configurar Integração n8n</h2><div class="modal-sub">URLs dos webhooks para cada operação</div></div>
+      <button class="btn-close" onclick="closeModalConfig()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="config-note">
+        <strong>Como funciona:</strong> cada campo abaixo é uma URL de webhook do n8n que você vai criar. O app envia os dados para o n8n, que chama a API da Mandaê com o token protegido e devolve a resposta. O token da Mandaê fica <strong>só no n8n</strong>, nunca exposto aqui.
+      </div>
+      <div class="divider"></div>
+      <div class="form-row" style="gap:12px; margin-bottom:0">
+        <div class="field">
+          <label>🔵 Webhook — Cotação de Frete</label>
+          <input id="cfg-cotar" type="text" placeholder="https://seu-n8n.com/webhook/mandae-cotar"/>
+        </div>
+        <div class="field">
+          <label>🟡 Webhook — Criar Etiqueta</label>
+          <input id="cfg-etiqueta" type="text" placeholder="https://seu-n8n.com/webhook/mandae-etiqueta"/>
+        </div>
+        <div class="field">
+          <label>🟢 Webhook — Rastreamento</label>
+          <input id="cfg-rastrear" type="text" placeholder="https://seu-n8n.com/webhook/mandae-rastrear"/>
+        </div>
+        <div class="field">
+          <label>📋 Webhook — Histórico</label>
+          <input id="cfg-historico" type="text" placeholder="https://seu-n8n.com/webhook/mandae-historico"/>
+          <div class="hint">Opcional — se vazio, usa a planilha do Google Sheets</div>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="section-title-sm">Credenciais Google Sheets</div>
+      <div class="form-row cols-2">
+        <div class="field">
+          <label>Sheet ID</label>
+          <input id="cfg-sheet-id" type="text" placeholder="1EzIwMlWWwe1qckBzRrEJCwAIgkY67UDx1MDNwfoAk9g"/>
+        </div>
+        <div class="field">
+          <label>Google Client ID</label>
+          <input id="cfg-client-id" type="text" placeholder="280202090756-..."/>
+        </div>
+      </div>
+      <div class="config-note" style="margin-top:10px">
+        <strong>Precisa de ajuda para criar os workflows no n8n?</strong> Peça ao Claude para gerar os JSONs dos 3 workflows prontos para importar — é só dizer quais endpoints da Mandaê quer usar.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModalConfig()">Cancelar</button>
+      <button class="btn-save" onclick="salvarConfig()">Salvar configuração</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RASTREAMENTO INLINE -->
+<div class="modal-overlay" id="modal-rastreio" style="display:none" onclick="if(event.target===this)closeModalRastreio()">
+  <div class="modal">
+    <div class="modal-header">
+      <div><h2>Rastreamento</h2><div class="modal-sub" id="rastreio-sub">—</div></div>
+      <button class="btn-close" onclick="closeModalRastreio()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body" id="rastreio-body">
+      <div style="text-align:center;padding:20px;color:var(--text-light);font-size:12px;font-weight:600">
+        <div class="spinner spinner-red" style="display:inline-block;margin-bottom:8px"></div><br>Buscando rastreamento...
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModalRastreio()">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── CONFIG ──
+const SHEET_ID   = localStorage.getItem('afife_sheet_id')   || '1EzIwMlWWwe1qckBzRrEJCwAIgkY67UDx1MDNwfoAk9g';
+const CLIENT_ID  = localStorage.getItem('afife_client_id')  || '280202090756-sso0acjcirg3j9537dpfvp9eauh97od4.apps.googleusercontent.com';
+const SHEET_NAME = 'Página1';
+const SCOPES     = 'https://www.googleapis.com/auth/spreadsheets';
+
+let N8N_COTAR    = localStorage.getItem('afife_n8n_cotar')    || '';
+let N8N_ETIQUETA = localStorage.getItem('afife_n8n_etiqueta') || '';
+let N8N_RASTREAR = localStorage.getItem('afife_n8n_rastrear') || '';
+let N8N_HISTORICO= localStorage.getItem('afife_n8n_historico')|| '';
+
+let accessToken  = null;
+let tokenExpiry  = 0;
+let allRows      = [];
+let chipAtivo    = 'all';
+let selectedService = null;
+let cotacaoData  = [];
+
+// Mapeamento de colunas da planilha (baseado no index.html)
+// 0=Data 1=Pedido 2=Cliente 3=Valor 4=Conta 5=Sinal 6=Crédito 7=Frete 8=ST 9=Total 10=Telefone 11=Status 12=DtPgto 13=Obs 14=Vendedor 15=Enviado 16=Notif1 17=Notif2 18=Notif3
+// Coluna extra que vamos usar para tracking (coluna 19 = T no Sheets)
+const COL_DATA=0, COL_PEDIDO=1, COL_CLIENTE=2, COL_TEL=10, COL_STATUS=11, COL_VENDEDOR=14, COL_ENVIADO=15, COL_TRACKING=19;
+
+// ── UTILS ──
+function toast(msg, type='', dur=3000) {
+  document.querySelectorAll('.toast').forEach(e => e.remove());
+  const el = document.createElement('div');
+  el.className = 'toast' + (type ? ' '+type : '');
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => { el.style.opacity='0'; el.style.transition='opacity 0.3s'; setTimeout(()=>el.remove(),400); }, dur);
+}
+
+function formatCEP(el) {
+  let v = el.value.replace(/\D/g,'');
+  if (v.length > 5) v = v.slice(0,5) + '-' + v.slice(5,8);
+  el.value = v;
+}
+
+function cepSemTraco(v) { return v.replace(/\D/g,''); }
+
+async function buscarCEP(cep) {
+  const c = cepSemTraco(cep);
+  if (c.length !== 8) return;
+  try {
+    const r = await fetch(`https://viacep.com.br/ws/${c}/json/`);
+    const d = await r.json();
+    if (!d.erro) {
+      if (d.logradouro) document.getElementById('et-rua').value    = d.logradouro;
+      if (d.bairro)     document.getElementById('et-bairro').value  = d.bairro;
+      if (d.localidade) document.getElementById('et-cidade').value  = d.localidade;
+      if (d.uf)         document.getElementById('et-estado').value  = d.uf;
+    }
+  } catch(e) {}
+}
+
+function fmtBRL(v) {
+  const n = parseFloat(v);
+  if (isNaN(n)) return '—';
+  return n.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+}
+
+function fmtData(v) {
+  if (!v) return '—';
+  return v;
+}
+
+// ── CONFIG ──
+function openModalConfig() {
+  document.getElementById('cfg-cotar').value    = N8N_COTAR;
+  document.getElementById('cfg-etiqueta').value = N8N_ETIQUETA;
+  document.getElementById('cfg-rastrear').value = N8N_RASTREAR;
+  document.getElementById('cfg-historico').value= N8N_HISTORICO;
+  document.getElementById('cfg-sheet-id').value = localStorage.getItem('afife_sheet_id') || SHEET_ID;
+  document.getElementById('cfg-client-id').value= localStorage.getItem('afife_client_id') || CLIENT_ID;
+  document.getElementById('modal-config').style.display = 'flex';
+}
+function closeModalConfig() { document.getElementById('modal-config').style.display = 'none'; }
+function salvarConfig() {
+  N8N_COTAR    = document.getElementById('cfg-cotar').value.trim();
+  N8N_ETIQUETA = document.getElementById('cfg-etiqueta').value.trim();
+  N8N_RASTREAR = document.getElementById('cfg-rastrear').value.trim();
+  N8N_HISTORICO= document.getElementById('cfg-historico').value.trim();
+  const sid    = document.getElementById('cfg-sheet-id').value.trim();
+  const cid    = document.getElementById('cfg-client-id').value.trim();
+
+  localStorage.setItem('afife_n8n_cotar',    N8N_COTAR);
+  localStorage.setItem('afife_n8n_etiqueta', N8N_ETIQUETA);
+  localStorage.setItem('afife_n8n_rastrear', N8N_RASTREAR);
+  localStorage.setItem('afife_n8n_historico',N8N_HISTORICO);
+  if (sid) localStorage.setItem('afife_sheet_id',  sid);
+  if (cid) localStorage.setItem('afife_client_id', cid);
+
+  const temUrls = N8N_COTAR || N8N_ETIQUETA || N8N_RASTREAR;
+  document.getElementById('btn-config').classList.toggle('configured', !!temUrls);
+  document.getElementById('config-label').textContent = temUrls ? 'n8n Configurado ✓' : 'Configurar n8n';
+
+  closeModalConfig();
+  toast('Configuração salva!', 'success');
+}
+
+// Verifica config ao carregar
+(function() {
+  const temUrls = N8N_COTAR || N8N_ETIQUETA || N8N_RASTREAR;
+  if (temUrls) {
+    document.getElementById('btn-config').classList.add('configured');
+    document.getElementById('config-label').textContent = 'n8n Configurado ✓';
+  }
+})();
+
+// ── AUTH GOOGLE ──
+function handleAuth() {
+  if (accessToken && Date.now() < tokenExpiry) { toast('Já conectado. Atualizando...'); loadSheetData(); return; }
+  const sid = localStorage.getItem('afife_client_id') || CLIENT_ID;
+  const params = new URLSearchParams({client_id:sid, redirect_uri:location.origin+location.pathname, response_type:'token', scope:SCOPES, prompt:'select_account'});
+  const popup = window.open('https://accounts.google.com/o/oauth2/v2/auth?'+params,'oauth','width=520,height=640,top=100,left=200');
+  if (!popup) { toast('Popup bloqueado. Permita popups.','error'); return; }
+  const check = setInterval(()=>{
+    try {
+      if (popup.location.href.includes('access_token')) {
+        const hash = new URLSearchParams(popup.location.hash.slice(1));
+        accessToken = hash.get('access_token');
+        tokenExpiry = Date.now() + parseInt(hash.get('expires_in')||'3600')*1000;
+        popup.close(); clearInterval(check);
+        document.getElementById('btn-auth').classList.add('connected');
+        document.getElementById('auth-label').textContent = 'Conectado';
+        document.getElementById('sync-dot').classList.add('on');
+        loadSheetData();
+      }
+    } catch(e){}
+    if (popup.closed) clearInterval(check);
+  }, 500);
+}
+
+// ── CARREGAR PLANILHA ──
+async function loadSheetData() {
+  if (!accessToken || Date.now() >= tokenExpiry) return;
+  const sid = localStorage.getItem('afife_sheet_id') || SHEET_ID;
+  try {
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${sid}/values/${SHEET_NAME}?key=&access_token=${accessToken}`;
+    const r = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sid}/values/${SHEET_NAME}`, {
+      headers: { Authorization: 'Bearer ' + accessToken }
+    });
+    if (!r.ok) throw new Error('Erro ' + r.status);
+    const d = await r.json();
+    allRows = (d.values || []).slice(1); // pula header
+    // filtra só MANDAÉ/MANDAE
+    renderHistorico();
+    updateStats();
+  } catch(e) {
+    toast('Erro ao carregar planilha: ' + e.message, 'error');
+  }
+}
+
+function getMandaeRows() {
+  return allRows.filter(r => {
+    const env = (r[COL_ENVIADO]||'').toUpperCase();
+    return env.includes('MANDAE') || env.includes('MANDAÉ') || env.includes('MANDAÊ');
+  });
+}
+
+function updateStats() {
+  const rows = getMandaeRows();
+  document.getElementById('cnt-total').textContent = rows.length;
+  // tracking status baseado na coluna 19
+  const comTracking = rows.filter(r => (r[COL_TRACKING]||'').trim());
+  const semTracking = rows.filter(r => !(r[COL_TRACKING]||'').trim());
+  // simplificado: sem integração de status real, mostramos o que temos
+  document.getElementById('cnt-transito').textContent = '—';
+  document.getElementById('cnt-entregue').textContent = '—';
+  document.getElementById('cnt-pendente').textContent = semTracking.length;
+  if (comTracking.length || semTracking.length) {
+    document.getElementById('cnt-transito').textContent = comTracking.length;
+  }
+}
+
+// ── HISTÓRICO ──
+let chipAtual = 'all';
+function setChip(val, el) {
+  chipAtual = val;
+  document.querySelectorAll('.filter-chips .chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderHistorico();
+}
+
+function renderHistorico() {
+  const tbody = document.getElementById('tbody-historico');
+  const footer = document.getElementById('footer-historico');
+  const q = (document.getElementById('search').value||'').toLowerCase();
+  let rows = getMandaeRows();
+
+  // busca
+  if (q) {
+    rows = rows.filter(r => {
+      return [r[COL_PEDIDO],r[COL_CLIENTE],r[COL_TEL],r[COL_TRACKING]].some(v=>(v||'').toLowerCase().includes(q));
+    });
+  }
+
+  // chip (por ora filtra apenas se tem ou não tracking)
+  if (chipAtual === 'pendente') rows = rows.filter(r => !(r[COL_TRACKING]||'').trim());
+  // outros chips dependem de status real da Mandaê — mostrados quando integrado
+
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div><div class="empty-title">Nenhum envio encontrado</div><div class="empty-sub">${allRows.length ? 'Ajuste os filtros ou verifique a coluna "Enviado" na planilha' : 'Conecte a planilha para ver o histórico'}</div></div></td></tr>`;
+    footer.textContent = '0 envios';
+    return;
+  }
+
+  tbody.innerHTML = rows.map((r, i) => {
+    const tracking = (r[COL_TRACKING]||'').trim();
+    const statusBadge = tracking
+      ? '<span class="badge transito">Com tracking</span>'
+      : '<span class="badge pendente">Sem tracking</span>';
+    const btnRastrear = tracking
+      ? `<button class="btn-rastrear-inline" onclick="rastrearModal('${tracking}','${(r[COL_PEDIDO]||'').replace(/'/g,'')}','${(r[COL_CLIENTE]||'').replace(/'/g,'')}')">
+           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 14 8 14s8-8.75 8-14a8 8 0 0 0-8-8z"/></svg>
+         </button>`
+      : '<span style="color:var(--text-light);font-size:11px">—</span>';
+
+    return `<tr>
+      <td class="td-muted">${fmtData(r[COL_DATA])}</td>
+      <td class="td-pedido">${r[COL_PEDIDO]||'—'}</td>
+      <td style="font-weight:700">${r[COL_CLIENTE]||'—'}</td>
+      <td class="td-muted">${r[COL_TEL]||'—'}</td>
+      <td style="font-family:monospace;font-size:11px">${tracking || '<span style="color:var(--text-light)">Não informado</span>'}</td>
+      <td>${statusBadge}</td>
+      <td class="td-muted">${r[COL_VENDEDOR]||'—'}</td>
+      <td>${btnRastrear}</td>
+    </tr>`;
+  }).join('');
+
+  footer.textContent = `${rows.length} envio${rows.length!==1?'s':''} Mandaê`;
+}
+
+// ── COTAÇÃO ──
+async function cotar() {
+  if (!N8N_COTAR) { toast('Configure o webhook de cotação primeiro', 'error'); openModalConfig(); return; }
+  const cep    = cepSemTraco(document.getElementById('cot-cep').value);
+  const peso   = parseInt(document.getElementById('cot-peso').value);
+  if (cep.length !== 8) { toast('CEP inválido', 'error'); return; }
+  if (!peso || peso < 1) { toast('Informe o peso', 'error'); return; }
+
+  const btn = document.getElementById('btn-cotar');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Calculando...';
+
+  const payload = {
+    cep_destino: cep,
+    peso_gramas: peso,
+    largura_cm:  parseInt(document.getElementById('cot-largura').value) || 15,
+    altura_cm:   parseInt(document.getElementById('cot-altura').value)  || 10,
+    comprimento_cm: parseInt(document.getElementById('cot-comprimento').value) || 20,
+    valor_declarado: parseFloat(document.getElementById('cot-valor').value) || 0
+  };
+
+  try {
+    const r = await fetch(N8N_COTAR, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const d = await r.json();
+    renderCotacao(d);
+  } catch(e) {
+    toast('Erro na cotação: ' + e.message, 'error');
+    // DEMO: mostra resultado simulado para testar a UI
+    renderCotacaoDemo();
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg> Calcular frete';
+  }
+}
+
+function renderCotacao(data) {
+  // Espera array de opções: [{service:'PAC', price:25.90, days:7}, ...]
+  // Adaptar conforme o retorno real da Mandaê via n8n
+  let options = [];
+  if (Array.isArray(data)) options = data;
+  else if (data.options) options = data.options;
+  else if (data.results) options = data.results;
+
+  const resultado = document.getElementById('cotacao-resultado');
+  const container = document.getElementById('cotacao-options');
+
+  if (!options.length) {
+    container.innerHTML = '<div class="cotacao-empty">Nenhuma opção disponível para este CEP</div>';
+  } else {
+    cotacaoData = options;
+    // Popula select de serviço no form de etiqueta
+    const sel = document.getElementById('et-servico');
+    sel.innerHTML = '<option value="">Selecione o serviço</option>' +
+      options.map(o => `<option value="${o.service||o.name||o.id}">${o.service||o.name} — ${fmtBRL(o.price||o.valor)}</option>`).join('');
+
+    container.innerHTML = options.map((o, i) => `
+      <div class="cotacao-option" id="opt-${i}" onclick="selectOption(${i})">
+        <div class="cotacao-service">${o.service||o.name||'Serviço '+i}</div>
+        <div class="cotacao-price">${fmtBRL(o.price||o.valor||0)}</div>
+        <div class="cotacao-days">${o.days||o.prazo||'?'} dias úteis</div>
+      </div>
+    `).join('');
+  }
+
+  resultado.classList.add('visible');
+}
+
+function renderCotacaoDemo() {
+  // Dados de demonstração para testar a UI sem n8n configurado
+  renderCotacao([
+    { service: 'ECONOMICO', price: 18.50, days: 7 },
+    { service: 'EXPRESSO',  price: 34.90, days: 3 },
+    { service: 'MESMO DIA', price: 55.00, days: 1 }
+  ]);
+  toast('⚠ Resultado de demonstração — configure o webhook', 'error', 5000);
+}
+
+function selectOption(i) {
+  document.querySelectorAll('.cotacao-option').forEach(el => el.classList.remove('selected'));
+  document.getElementById('opt-'+i).classList.add('selected');
+  selectedService = cotacaoData[i];
+  // Sincroniza o select de serviço no form de etiqueta
+  const sel = document.getElementById('et-servico');
+  const opt = cotacaoData[i];
+  sel.value = opt.service||opt.name||opt.id||'';
+  toast('Serviço selecionado: ' + (opt.service||opt.name));
+}
+
+// ── CRIAR ETIQUETA ──
+async function criarEtiqueta() {
+  if (!N8N_ETIQUETA) { toast('Configure o webhook de etiqueta primeiro', 'error'); openModalConfig(); return; }
+
+  const nome = document.getElementById('et-nome').value.trim();
+  const rua  = document.getElementById('et-rua').value.trim();
+  const num  = document.getElementById('et-num').value.trim();
+  const cep  = cepSemTraco(document.getElementById('et-cep').value);
+  const bairro = document.getElementById('et-bairro').value.trim();
+  const cidade = document.getElementById('et-cidade').value.trim();
+  const estado = document.getElementById('et-estado').value.trim();
+  const servico= document.getElementById('et-servico').value;
+  const desc   = document.getElementById('et-descricao').value.trim();
+
+  if (!nome||!rua||!num||cep.length!==8||!bairro||!cidade||!estado||!desc) {
+    toast('Preencha todos os campos obrigatórios (*)', 'error'); return;
+  }
+
+  const btn = document.getElementById('btn-criar-etiqueta');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner" style="border-top-color:var(--red-dark)"></span> Gerando...';
+
+  const payload = {
+    pedido_ref: document.getElementById('et-pedido').value.trim(),
+    servico: servico,
+    destinatario: {
+      nome, cpf_cnpj: document.getElementById('et-doc').value.trim(),
+      telefone: document.getElementById('et-tel').value.trim(),
+      email: document.getElementById('et-email').value.trim(),
+      logradouro: rua, numero: num,
+      complemento: document.getElementById('et-comp').value.trim(),
+      bairro, cidade, estado, cep
+    },
+    descricao: desc
+  };
+
+  const resultEl = document.getElementById('etiqueta-result');
+  try {
+    const r = await fetch(N8N_ETIQUETA, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const d = await r.json();
+
+    // Espera: { tracking_code: 'XXX', label_url: 'https://...', id: 123 }
+    const tracking = d.tracking_code || d.trackingCode || d.codigo || '—';
+    const labelUrl = d.label_url || d.labelUrl || d.etiqueta_url || null;
+
+    resultEl.innerHTML = `
+      <div class="etiqueta-success">
+        <div class="etiqueta-success-icon">✅</div>
+        <div class="etiqueta-success-title">Etiqueta gerada com sucesso!</div>
+        <div class="etiqueta-tracking">${tracking}</div>
+        <div class="etiqueta-actions">
+          ${labelUrl ? `<a href="${labelUrl}" target="_blank" class="btn-primary btn-sm" style="text-decoration:none">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            Baixar etiqueta
+          </a>` : ''}
+          <button class="btn-secondary btn-sm" onclick="navigator.clipboard.writeText('${tracking}');toast('Código copiado!','success')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copiar código
+          </button>
+          <button class="btn-secondary btn-sm" onclick="preencherRastreio('${tracking}')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 14 8 14s8-8.75 8-14a8 8 0 0 0-8-8z"/></svg>
+            Rastrear
+          </button>
+        </div>
+      </div>`;
+    resultEl.classList.add('visible');
+    toast('Etiqueta gerada! Código: ' + tracking, 'success', 5000);
+  } catch(e) {
+    resultEl.innerHTML = `
+      <div class="etiqueta-error">
+        <div class="etiqueta-error-title">Erro ao gerar etiqueta</div>
+        <div class="etiqueta-error-msg">${e.message}</div>
+      </div>`;
+    resultEl.classList.add('visible');
+    toast('Erro ao gerar etiqueta', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M12 5v14M5 12l7 7 7-7"/></svg> Gerar etiqueta';
+  }
+}
+
+// ── RASTREAMENTO ──
+function preencherRastreio(codigo) {
+  document.getElementById('track-codigo').value = codigo;
+  document.getElementById('track-codigo').scrollIntoView({behavior:'smooth', block:'center'});
+  rastrear();
+}
+
+async function rastrear() {
+  if (!N8N_RASTREAR) { toast('Configure o webhook de rastreamento primeiro', 'error'); openModalConfig(); return; }
+  const codigo = document.getElementById('track-codigo').value.trim();
+  if (!codigo) { toast('Informe o código de rastreio', 'error'); return; }
+
+  const btn = document.getElementById('btn-rastrear');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Buscando...';
+
+  try {
+    const r = await fetch(N8N_RASTREAR, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tracking_code: codigo })
+    });
+    const d = await r.json();
+    renderRastreamento(d, codigo);
+  } catch(e) {
+    toast('Erro no rastreamento: ' + e.message, 'error');
+    renderRastreamentoDemo(codigo);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M21 21l-4.35-4.35"/><circle cx="11" cy="11" r="7"/></svg> Rastrear';
+  }
+}
+
+function getStatusStyle(status) {
+  const s = (status||'').toUpperCase();
+  if (s.includes('ENTREGUE') || s.includes('DELIVERED')) return { cls:'badge entregue', label:'Entregue' };
+  if (s.includes('TRANSITO') || s.includes('TRANSIT') || s.includes('SAIU') || s.includes('POSTADO')) return { cls:'badge transito', label:'Em trânsito' };
+  if (s.includes('DEVOLVIDO') || s.includes('RETURNED')) return { cls:'badge erro', label:'Devolvido' };
+  return { cls:'badge postado', label: status || 'Em andamento' };
+}
+
+function renderRastreamento(data, codigo) {
+  // Espera: { status: 'EM_TRANSITO', eventos: [{data:'dd/mm', hora:'hh:mm', descricao:'...', local:'...'}, ...] }
+  const resultEl = document.getElementById('tracking-result');
+  const status = data.status || data.situacao || 'EM ANDAMENTO';
+  const eventos = data.eventos || data.events || data.historico || [];
+
+  const st = getStatusStyle(status);
+  document.getElementById('track-code-display').textContent = codigo;
+  const badge = document.getElementById('track-status-badge');
+  badge.className = 'tracking-status-badge ' + st.cls.replace('badge ','');
+  badge.style.background = st.cls.includes('entregue') ? '#ECFDF5' : st.cls.includes('transito') ? '#E0F2FE' : st.cls.includes('erro') ? '#FEF2F2' : '#FFFBEB';
+  badge.style.color = st.cls.includes('entregue') ? '#065F46' : st.cls.includes('transito') ? '#0369A1' : st.cls.includes('erro') ? '#991B1B' : '#92400E';
+  badge.textContent = st.label;
+
+  const timeline = document.getElementById('tracking-timeline');
+  if (!eventos.length) {
+    timeline.innerHTML = '<div style="font-size:12px;color:var(--text-muted);font-weight:600;padding:8px 0">Nenhum evento registrado ainda</div>';
+  } else {
+    timeline.innerHTML = eventos.map((ev, i) => `
+      <div class="timeline-item${i===0?' current':''}">
+        <div>
+          <div class="timeline-date">${ev.data||''} ${ev.hora||''}</div>
+          <div class="timeline-desc">${ev.descricao||ev.description||ev.status||'—'}</div>
+          ${ev.local||ev.location ? `<div class="timeline-local">📍 ${ev.local||ev.location}</div>` : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  resultEl.classList.add('visible');
+}
+
+function renderRastreamentoDemo(codigo) {
+  renderRastreamento({
+    status: 'EM_TRANSITO',
+    eventos: [
+      { data:'22/05/2026', hora:'14:32', descricao:'Objeto saiu para entrega', local:'São Paulo - SP' },
+      { data:'22/05/2026', hora:'08:10', descricao:'Objeto em transit no centro de distribuição', local:'São Paulo - SP' },
+      { data:'21/05/2026', hora:'18:45', descricao:'Objeto postado', local:'25 de Março - SP' }
+    ]
+  }, codigo);
+  toast('⚠ Resultado de demonstração — configure o webhook', 'error', 5000);
+}
+
+// ── RASTREAMENTO INLINE (histórico) ──
+async function rastrearModal(codigo, pedido, cliente) {
+  document.getElementById('rastreio-sub').textContent = `Pedido ${pedido} — ${cliente}`;
+  document.getElementById('rastreio-body').innerHTML = `
+    <div style="text-align:center;padding:20px;color:var(--text-light);font-size:12px;font-weight:600">
+      <div class="spinner spinner-red" style="display:inline-block;margin-right:8px"></div>Buscando rastreamento...
+    </div>`;
+  document.getElementById('modal-rastreio').style.display = 'flex';
+
+  if (!N8N_RASTREAR) {
+    document.getElementById('rastreio-body').innerHTML = `
+      <div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px;font-weight:600">
+        Configure o webhook de rastreamento para ver o status em tempo real.<br><br>
+        <strong style="font-family:monospace;font-size:13px;color:var(--blue)">${codigo}</strong>
+      </div>`;
+    return;
+  }
+
+  try {
+    const r = await fetch(N8N_RASTREAR, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tracking_code: codigo })
+    });
+    const d = await r.json();
+    const status = d.status || 'EM ANDAMENTO';
+    const eventos = d.eventos || d.events || d.historico || [];
+    const st = getStatusStyle(status);
+
+    document.getElementById('rastreio-body').innerHTML = `
+      <div class="tracking-header">
+        <span class="tracking-code">${codigo}</span>
+        <span class="tracking-status-badge" style="background:${st.cls.includes('entregue')?'#ECFDF5':st.cls.includes('transito')?'#E0F2FE':'#FFFBEB'};color:${st.cls.includes('entregue')?'#065F46':st.cls.includes('transito')?'#0369A1':'#92400E'}">${st.label}</span>
+      </div>
+      <div class="tracking-timeline">
+        ${eventos.length ? eventos.map((ev,i)=>`
+          <div class="timeline-item${i===0?' current':''}">
+            <div>
+              <div class="timeline-date">${ev.data||''} ${ev.hora||''}</div>
+              <div class="timeline-desc">${ev.descricao||ev.description||ev.status||'—'}</div>
+              ${ev.local||ev.location?`<div class="timeline-local">📍 ${ev.local||ev.location}</div>`:''}
+            </div>
+          </div>`).join('') : '<div style="font-size:12px;color:var(--text-muted);padding:8px 0">Nenhum evento registrado</div>'}
+      </div>`;
+  } catch(e) {
+    document.getElementById('rastreio-body').innerHTML = `
+      <div style="padding:12px;background:#FEF2F2;border-radius:var(--radius-md)">
+        <div style="font-weight:800;color:#991B1B;font-size:13px">Erro no rastreamento</div>
+        <div style="color:#B91C1C;font-size:12px;margin-top:4px">${e.message}</div>
+      </div>`;
+  }
+}
+
+function closeModalRastreio() { document.getElementById('modal-rastreio').style.display = 'none'; }
+
+// ── INIT ──
+renderHistorico();
+</script>
+</body>
+</html>
