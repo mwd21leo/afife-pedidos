@@ -1056,7 +1056,7 @@ function openModalLote() {
     toast('Nenhum pedido com status Confirmado para baixar.', 'error');
     return;
   }
-  document.getElementById('lote-dtpagto').value = new Date().toISOString().split('T')[0];
+  document.getElementById('lote-chk-all').checked = false;
   const container = document.getElementById('lote-items');
   container.innerHTML = confirmados.map(({ r, idx }) => `
     <div class="lote-item" onclick="toggleLoteItem(this)">
