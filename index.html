@@ -531,10 +531,6 @@ tbody td { padding: 10px 12px; font-size: 12px; font-weight: 600; color: var(--t
       <button class="btn-close" onclick="closeModalLote()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
     </div>
     <div class="modal-body">
-      <div class="field" style="margin-bottom:12px">
-        <label>Data de Pagamento (será aplicada a todos)</label>
-        <input id="lote-dtpagto" type="date"/>
-      </div>
       <div class="section-title" style="margin-bottom:6px">Pedidos disponíveis (status Confirmado)</div>
       <div class="lote-lista" id="lote-lista">
         <div class="lote-sel-all">
@@ -1086,10 +1082,6 @@ function atualizarContador() {
 async function confirmarBaixarLote() {
   const selecionados = [...document.querySelectorAll('.lote-chk:checked')];
   if (!selecionados.length) { toast('Selecione pelo menos um pedido'); return; }
-  const dtVal = document.getElementById('lote-dtpagto').value;
-  if (!dtVal) { toast('Informe a data de pagamento'); return; }
-  const [y,m,d] = dtVal.split('-');
-  const dtFmt = `${d}/${m}/${y}`;
   const btn = document.getElementById('btn-baixar-lote');
   btn.disabled = true; btn.textContent = 'Salvando...';
   try {
@@ -1097,9 +1089,7 @@ async function confirmarBaixarLote() {
     selecionados.forEach(chk => {
       const rowIdx = parseInt(chk.dataset.rowidx);
       updates.push({ range: `${SHEET_NAME}!L${rowIdx}`, values: [['BAIXADO']] });
-      updates.push({ range: `${SHEET_NAME}!M${rowIdx}`, values: [[dtFmt]] });
       rows[rowIdx-1][11] = 'BAIXADO';
-      rows[rowIdx-1][12] = dtFmt;
     });
     await apiBatch(updates);
     updateStats(); renderTable(); closeModalLote();
