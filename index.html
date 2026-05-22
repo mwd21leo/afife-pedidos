@@ -1066,7 +1066,7 @@ async function confirmarStatus() {
 // ── OAUTH ──
 function handleAuth() {
   if (accessToken&&Date.now()<tokenExpiry) { toast('Já conectado. Atualizando...'); loadSheetData(); return; }
-  const params=new URLSearchParams({client_id:CLIENT_ID,redirect_uri:location.origin+location.pathname,response_type:'token',scope:SCOPES,prompt:'consent'});
+  const params=new URLSearchParams({client_id:CLIENT_ID,redirect_uri:location.origin+location.pathname,response_type:'token',scope:SCOPES,prompt:'select_account'});
   const popup=window.open('https://accounts.google.com/o/oauth2/v2/auth?'+params,'oauth','width=520,height=640,top=100,left=200');
   if (!popup) { toast('Popup bloqueado. Permita popups para este site.','error'); return; }
   const check=setInterval(()=>{
@@ -1082,13 +1082,87 @@ function handleAuth() {
   },500);
 }
 
+// Renovação silenciosa via iframe (sem interação do usuário)
+// Funciona enquanto a sessão do Google estiver ativa no navegador
+function silentRenew() {
+  return new Promise((resolve, reject) => {
+    // Remove iframe anterior se existir
+    const old = document.getElementById('silent-iframe');
+    if (old) old.remove();
+
+    const iframe = document.createElement('iframe');
+    iframe.id = 'silent-iframe';
+    iframe.style.cssText = 'display:none;width:0;height:0;border:0;position:absolute;top:-9999px';
+
+    const params = new URLSearchParams({
+      client_id: CLIENT_ID,
+      redirect_uri: location.origin + location.pathname,
+      response_type: 'token',
+      scope: SCOPES,
+      prompt: 'none'  // não mostra nenhuma tela — falha silenciosamente se sessão expirou
+    });
+
+    let done = false;
+    const timeout = setTimeout(() => {
+      if (!done) { done = true; iframe.remove(); reject(new Error('timeout')); }
+    }, 8000);
+
+    iframe.onload = () => {
+      try {
+        const hash = new URLSearchParams(iframe.contentWindow.location.hash.slice(1));
+        const token = hash.get('access_token');
+        if (token) {
+          accessToken = token;
+          tokenExpiry = Date.now() + parseInt(hash.get('expires_in') || '3600') * 1000;
+          clearTimeout(timeout); done = true; iframe.remove();
+          resolve(token);
+        } else {
+          const err = hash.get('error') || 'no_token';
+          clearTimeout(timeout); done = true; iframe.remove();
+          reject(new Error(err));
+        }
+      } catch(e) {
+        // cross-origin ainda não resolveu — aguarda próximo onload
+      }
+    };
+
+    document.body.appendChild(iframe);
+    iframe.src = 'https://accounts.google.com/o/oauth2/v2/auth?' + params;
+  });
+}
+
 function onConnected() {
   document.getElementById('btn-auth').classList.add('connected');
   document.getElementById('auth-label').textContent='Conectado';
   document.getElementById('sync-dot').classList.add('on');
   loadSheetData();
   if (syncInterval) clearInterval(syncInterval);
-  syncInterval=setInterval(()=>{ if(accessToken&&Date.now()<tokenExpiry) loadSheetData(); else clearInterval(syncInterval); },30000);
+  syncInterval = setInterval(async () => {
+    const agora = Date.now();
+    // Token expira em menos de 5 minutos → tenta renovar silenciosamente
+    if (accessToken && tokenExpiry - agora < 5 * 60 * 1000) {
+      try {
+        await silentRenew();
+        console.log('[auth] token renovado silenciosamente');
+      } catch(e) {
+        console.warn('[auth] renovação silenciosa falhou:', e.message);
+        // Só pede login manual se o token já expirou de fato
+        if (Date.now() >= tokenExpiry) {
+          accessToken = null;
+          document.getElementById('btn-auth').classList.remove('connected');
+          document.getElementById('auth-label').textContent = 'Reconectar';
+          document.getElementById('sync-dot').classList.remove('on');
+          toast('Sessão expirada — clique em Reconectar', 'error');
+          clearInterval(syncInterval);
+          return;
+        }
+      }
+    }
+    // Só faz sync se token válido
+    if (accessToken && Date.now() < tokenExpiry) {
+      loadSheetData();
+    }
+  }, 30000);
 }
 
 // ── MODAL BAIXAR EM LOTE ──
