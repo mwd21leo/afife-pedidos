@@ -306,6 +306,9 @@ tbody td { padding: 10px 12px; font-size: 12px; font-weight: 600; color: var(--t
     <button class="btn-refresh" onclick="loadSheetData()" title="Atualizar">
       <svg id="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v5h5M20 20v-5h-5"/><path d="M4 9a8 8 0 0 1 14.93-2M20 15a8 8 0 0 1-14.93 2"/></svg>
     </button>
+    <button class="btn-refresh" id="btn-toggle-valores" onclick="toggleValores()" title="Ver/ocultar valores" style="gap:4px">
+      <svg id="icon-olho" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+    </button>
     <button class="btn-auth-top" id="btn-auth" onclick="handleAuth()">
       <div class="sync-dot" id="sync-dot"></div>
       <span id="auth-label">Conectar planilha</span>
@@ -324,35 +327,26 @@ tbody td { padding: 10px 12px; font-size: 12px; font-weight: 600; color: var(--t
       <div class="stat-card ag">
         <div class="stat-header">
           <div class="stat-label">Aguardando</div>
-          <button class="btn-valor" onclick="pedirSenha('ag')" title="Ver valor total">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-          </button>
         </div>
         <div class="stat-value" id="cnt-ag">—</div>
         <div class="stat-sublabel">pagamento pendente</div>
-        <div class="stat-valor-total" id="val-ag"><span id="val-ag-txt"></span> <button onclick="esconderValor('ag')" style="background:none;border:none;cursor:pointer;font-size:10px;color:var(--text-light);font-weight:700;padding:0 2px" title="Esconder">✕</button></div>
+        <div class="stat-valor-total" id="val-ag"><span id="val-ag-txt"></span></div>
       </div>
       <div class="stat-card cp">
         <div class="stat-header">
           <div class="stat-label">Comprovante</div>
-          <button class="btn-valor" onclick="pedirSenha('cp')" title="Ver valor total">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-          </button>
         </div>
         <div class="stat-value" id="cnt-cp">—</div>
         <div class="stat-sublabel">aguardando confirmação</div>
-        <div class="stat-valor-total" id="val-cp"><span id="val-cp-txt"></span> <button onclick="esconderValor('cp')" style="background:none;border:none;cursor:pointer;font-size:10px;color:var(--text-light);font-weight:700;padding:0 2px" title="Esconder">✕</button></div>
+        <div class="stat-valor-total" id="val-cp"><span id="val-cp-txt"></span></div>
       </div>
       <div class="stat-card cf">
         <div class="stat-header">
           <div class="stat-label">Confirmados</div>
-          <button class="btn-valor" onclick="pedirSenha('cf')" title="Ver valor total">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-          </button>
         </div>
         <div class="stat-value" id="cnt-cf">—</div>
         <div class="stat-sublabel">prontos para baixar</div>
-        <div class="stat-valor-total" id="val-cf"><span id="val-cf-txt"></span> <button onclick="esconderValor('cf')" style="background:none;border:none;cursor:pointer;font-size:10px;color:var(--text-light);font-weight:700;padding:0 2px" title="Esconder">✕</button></div>
+        <div class="stat-valor-total" id="val-cf"><span id="val-cf-txt"></span></div>
       </div>
     </div>
 
@@ -583,7 +577,7 @@ let tokenExpiry = 0;
 let syncInterval = null;
 let sortCol = -1;
 let sortDir = 1;
-let senhaTarget = null;
+let valoresVisiveis = false; // controle do botão único de ver/ocultar valores
 
 // ── UTILS ──
 function toast(msg, type='', dur=3000) {
@@ -635,11 +629,13 @@ function envKey(s) {
 function envLabel(s) { return {M:'MANDAÉ',T:'TAXI',B:'MOTOBOY',R:'RETIRADA'}[envKey(s)] || (s||'—'); }
 
 function notifCell(v) {
-  if (!v) return '<span class="notif-empty">—</span>';
-  const u = v.toString().toUpperCase();
-  if (u === 'TRUE' || u === 'VERDADEIRO' || u === '1') return '<span class="notif-check">✓</span>';
-  if (v.toString().includes('ENVIADO') || v.toString().includes('/')) return '<span style="font-size:10px;color:#059669;font-weight:700">✓</span>';
-  return `<span class="notif-empty">${v}</span>`;
+  if (v === null || v === undefined || v === '') return '<span class="notif-empty">—</span>';
+  if (v === true || v === 1) return '<span class="notif-check">✓</span>';
+  const s = v.toString().toUpperCase();
+  if (s === 'TRUE' || s === 'VERDADEIRO' || s === '1') return '<span class="notif-check">✓</span>';
+  if (s.includes('ENVIADO') || s.includes('/')) return '<span style="font-size:10px;color:#059669;font-weight:700">✓</span>';
+  if (typeof v === 'number') return '<span class="notif-check">✓</span>'; // serial de data = tem data = notificado
+  return '<span class="notif-empty">—</span>';
 }
 
 function calcTotal() {
@@ -773,7 +769,7 @@ function renderTable() {
       <td><button class="btn-edit" onclick="openModalStatus(${realIdx})" title="Editar">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
       </button></td>
-      <td class="td-muted">${r[0]||'—'}</td>
+      <td class="td-muted">${sheetDateToStr(r[0])||'—'}</td>
       <td class="td-pedido">${r[1]||'—'}</td>
       <td class="td-cliente" title="${r[2]||''}">${r[2]||'—'}</td>
       <td class="td-valor">${fmt(r[3])}</td>
@@ -785,7 +781,7 @@ function renderTable() {
       <td class="td-valor">${fmt(r[9])}</td>
       <td class="td-muted">${r[10]||'—'}</td>
       <td><span class="badge ${sk}">${statusLabel(r[11])}</span></td>
-      <td class="td-muted">${r[12]||'—'}</td>
+      <td class="td-muted">${sheetDateToStr(r[12])||'—'}</td>
       <td class="td-muted" style="max-width:120px;overflow:hidden;text-overflow:ellipsis" title="${r[13]||''}">${r[13]||'—'}</td>
       <td class="td-muted">${r[14]||'—'}</td>
       <td>${envBadge}</td>
@@ -797,43 +793,75 @@ function renderTable() {
 }
 
 function updateStats() {
-  const data = rows.slice(1);
-  const cnt = key => data.filter(r => statusKey(r[11])===key).length;
-  const sum = key => data.filter(r => statusKey(r[11])===key && r[0] && r[1] && r[2] && r[1].toString().trim() !== '').reduce((a,r) => {
-    const v = parseBRL(r[9]);
-    return a + (isNaN(v) ? 0 : v);
-  }, 0);
-  document.getElementById('cnt-ag').textContent = cnt('ag');
-  document.getElementById('cnt-cp').textContent = cnt('cp');
-  document.getElementById('cnt-cf').textContent = cnt('cf');
-  // Armazena totais para uso pelo modal de senha
-  window._totais = { ag: sum('ag'), cp: sum('cp'), cf: sum('cf') };
+  const data = rows.slice(1).filter(r => r[1] && r[1].toString().trim() !== ''); // só linhas com nº pedido
+  const isStatus = (r, ...terms) => {
+    const s = (r[11]||'').toString().toUpperCase().trim();
+    return terms.some(t => s.includes(t));
+  };
+  const sumByStatus = (...terms) => data
+    .filter(r => isStatus(r, ...terms))
+    .reduce((a, r) => {
+      const v = typeof r[9] === 'number' ? r[9] : parseBRL(r[9]);
+      return a + (isNaN(v) ? 0 : v);
+    }, 0);
+  const cntByStatus = (...terms) => data.filter(r => isStatus(r, ...terms)).length;
+
+  document.getElementById('cnt-ag').textContent = cntByStatus('AGUARD');
+  document.getElementById('cnt-cp').textContent = cntByStatus('COMPROV');
+  document.getElementById('cnt-cf').textContent = cntByStatus('CONFIRM');
+  window._totais = {
+    ag: sumByStatus('AGUARD'),
+    cp: sumByStatus('COMPROV'),
+    cf: sumByStatus('CONFIRM')
+  };
+  // Se valores já estão visíveis, atualiza sem pedir senha de novo
+  if (valoresVisiveis) mostrarValores();
 }
 
-// ── SENHA ──
-function pedirSenha(key) {
-  senhaTarget = key;
+// ── SENHA / VALORES ──
+function toggleValores() {
+  if (valoresVisiveis) {
+    ocultarValores();
+  } else {
+    pedirSenha();
+  }
+}
+
+function pedirSenha() {
   document.getElementById('senha-input').value = '';
   document.getElementById('modal-senha').style.display = 'flex';
   setTimeout(()=>document.getElementById('senha-input').focus(), 100);
 }
-function fecharSenha() { document.getElementById('modal-senha').style.display = 'none'; senhaTarget = null; }
+function fecharSenha() { document.getElementById('modal-senha').style.display = 'none'; }
+
 function confirmarSenha() {
   const v = document.getElementById('senha-input').value;
   if (v !== SENHA) { toast('Senha incorreta', 'error'); document.getElementById('senha-input').value=''; return; }
-  const target = senhaTarget;
   fecharSenha();
-  if (!target) return;
-  const el = document.getElementById('val-'+target);
-  const total = (window._totais||{})[target] || 0;
-  const span = document.getElementById('val-'+target+'-txt');
-  if (span) span.textContent = fmt(total);
-  el.classList.add('visible');
+  mostrarValores();
 }
 
-function esconderValor(key) {
-  const el = document.getElementById('val-'+key);
-  if (el) el.classList.remove('visible');
+function mostrarValores() {
+  const totais = window._totais || {};
+  ['ag','cp','cf'].forEach(key => {
+    const span = document.getElementById('val-'+key+'-txt');
+    const el   = document.getElementById('val-'+key);
+    if (span) span.textContent = fmt(totais[key] || 0);
+    if (el)   el.classList.add('visible');
+  });
+  // Trocar ícone para "olho fechado"
+  document.getElementById('icon-olho').innerHTML = '<path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>';
+  valoresVisiveis = true;
+}
+
+function ocultarValores() {
+  ['ag','cp','cf'].forEach(key => {
+    const el = document.getElementById('val-'+key);
+    if (el) el.classList.remove('visible');
+  });
+  // Restaurar ícone olho aberto
+  document.getElementById('icon-olho').innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+  valoresVisiveis = false;
 }
 
 // ── UTILS PLANILHA ──
@@ -843,8 +871,21 @@ function toBRL(n) {
 }
 
 // ── API SHEETS ──
+function sheetDateToStr(v) {
+  // Sheets UNFORMATTED_VALUE retorna datas como número serial (dias desde 30/12/1899)
+  if (!v && v !== 0) return '';
+  if (typeof v === 'string') return v; // já veio como string (ex: digitado manualmente)
+  if (typeof v === 'number') {
+    const d = new Date(Math.round((v - 25569) * 86400 * 1000));
+    const dd = String(d.getUTCDate()).padStart(2,'0');
+    const mm = String(d.getUTCMonth()+1).padStart(2,'0');
+    const yyyy = d.getUTCFullYear();
+    return `${dd}/${mm}/${yyyy}`;
+  }
+  return String(v);
+}
 async function apiGet(range) {
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(range)}`;
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(range)}?valueRenderOption=UNFORMATTED_VALUE`;
   const res = await fetch(url, { headers: { Authorization: 'Bearer '+accessToken } });
   if (!res.ok) { const b = await res.text(); throw new Error('HTTP '+res.status+' — '+b.slice(0,150)); }
   return res.json();
@@ -940,7 +981,10 @@ function openModalStatus(rowIdx) {
     document.getElementById('dtpagto-wrap').style.display='none';
   }
   document.getElementById('ms-dtpagto').value='';
-  if (r[12]) { const p=r[12].split('/'); if(p.length===3) document.getElementById('ms-dtpagto').value=`${p[2]}-${p[1]}-${p[0]}`; }
+  if (r[12]) {
+    const dtStr = sheetDateToStr(r[12]);
+    if (dtStr) { const p=dtStr.split('/'); if(p.length===3) document.getElementById('ms-dtpagto').value=`${p[2]}-${p[1]}-${p[0]}`; }
+  }
   // Enviado
   const ek=envKey(r[15]);
   const envMap={M:'MANDAE',T:'TAXI',B:'MOTOBOY',R:'RETIRADA NA LOJA'};
