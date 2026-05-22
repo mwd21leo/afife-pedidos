@@ -266,7 +266,27 @@ tbody td { padding: 10px 12px; font-size: 12px; font-weight: 600; color: var(--t
 .toast.success { background: #065F46; }
 .toast.error { background: #991B1B; }
 
-/* ── MODAL SENHA ── */
+.chip.ss { background:#FFF7ED; color:#9A3412; border-color:#FED7AA; }
+.chip.ss.active { background:#C2410C; color:white; border-color:#C2410C; }
+.btn-lote {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 700;
+  cursor: pointer; transition: all 0.15s; border: 1.5px solid #6B7280;
+  background: #F9FAFB; color: #374151; font-family: 'Nunito', sans-serif; white-space: nowrap;
+}
+.btn-lote:hover { background: #6B7280; color: white; }
+.btn-lote svg { width: 12px; height: 12px; }
+/* Modal lote */
+.lote-lista { max-height: 220px; overflow-y: auto; border: 1px solid var(--gray-200); border-radius: var(--radius-md); margin-bottom: 12px; }
+.lote-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--gray-100); font-size: 12px; font-weight: 600; cursor: pointer; }
+.lote-item:last-child { border-bottom: none; }
+.lote-item:hover { background: var(--gray-50); }
+.lote-item input[type=checkbox] { width: 15px; height: 15px; accent-color: var(--red); cursor: pointer; flex-shrink: 0; }
+.lote-item .li-pedido { font-weight: 800; color: var(--red); min-width: 80px; }
+.lote-item .li-cliente { flex: 1; color: var(--text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lote-item .li-total { color: var(--text-muted); min-width: 90px; text-align: right; }
+.lote-sel-all { display: flex; align-items: center; gap: 8px; padding: 8px 12px; font-size: 11px; font-weight: 700; color: var(--text-muted); cursor: pointer; border-bottom: 1px solid var(--gray-200); background: var(--gray-50); }
+.lote-sel-all input { width: 15px; height: 15px; accent-color: var(--red); cursor: pointer; }
 .senha-input { width: 100%; padding: 12px; text-align: center; font-size: 24px; letter-spacing: 6px; font-weight: 800; border: 2px solid var(--gray-200); border-radius: var(--radius-md); font-family: monospace; }
 .senha-input:focus { outline: none; border-color: var(--red); }
 </style>
@@ -348,7 +368,7 @@ tbody td { padding: 10px 12px; font-size: 12px; font-weight: 600; color: var(--t
         <button class="chip cp" onclick="setFilter('COMPROVANTE',this,'status')">Comprovante</button>
         <button class="chip cf" onclick="setFilter('CONFIRMADO',this,'status')">Confirmado</button>
         <button class="chip bx" onclick="setFilter('BAIXADO',this,'status')">Baixado</button>
-          <button class="chip" style="background:#FFF7ED;color:#9A3412;border-color:#FED7AA;font-family:Nunito,sans-serif;font-size:11px;font-weight:700;padding:6px 12px;border-radius:20px;cursor:pointer;border-width:1.5px;border-style:solid" onclick="setFilter('SEMSTATUS',this,'status')">Sem status</button>
+          <button class="chip ss" style="background:#FFF7ED;color:#9A3412;border-color:#FED7AA;font-family:Nunito,sans-serif;font-size:11px;font-weight:700;padding:6px 12px;border-radius:20px;cursor:pointer;border-width:1.5px;border-style:solid" onclick="setFilter('SEMSTATUS',this,'status')">Sem status</button>
       </div>
       <div class="filter-sep"></div>
       <!-- FILTROS ENVIO -->
@@ -359,6 +379,11 @@ tbody td { padding: 10px 12px; font-size: 12px; font-weight: 600; color: var(--t
         <button class="chip env-b" onclick="setFilter('MOTOBOY',this,'envio')">Motoboy</button>
         <button class="chip env-r" onclick="setFilter('RETIRADA',this,'envio')">Retirada</button>
       </div>
+      <div class="filter-sep"></div>
+      <button class="btn-lote" onclick="openModalLote()" title="Baixar múltiplos pedidos confirmados de uma vez">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/><path d="M5 19h14"/></svg>
+        Baixar em lote
+      </button>
     </div>
 
     <!-- TABLE -->
@@ -498,6 +523,35 @@ tbody td { padding: 10px 12px; font-size: 12px; font-weight: 600; color: var(--t
   </div>
 </div>
 
+<!-- MODAL BAIXAR EM LOTE -->
+<div class="modal-overlay" id="modal-lote" style="display:none" onclick="if(event.target===this)closeModalLote()">
+  <div class="modal">
+    <div class="modal-header">
+      <div><h2>Baixar em lote</h2><div class="modal-sub">Selecione os pedidos Confirmados para baixar juntos</div></div>
+      <button class="btn-close" onclick="closeModalLote()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="field" style="margin-bottom:12px">
+        <label>Data de Pagamento (será aplicada a todos)</label>
+        <input id="lote-dtpagto" type="date"/>
+      </div>
+      <div class="section-title" style="margin-bottom:6px">Pedidos disponíveis (status Confirmado)</div>
+      <div class="lote-lista" id="lote-lista">
+        <div class="lote-sel-all">
+          <input type="checkbox" id="lote-chk-all" onchange="toggleLoteTodos(this.checked)"/>
+          <label for="lote-chk-all">Selecionar todos</label>
+        </div>
+        <div id="lote-items"></div>
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);font-weight:600" id="lote-counter">0 pedidos selecionados</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModalLote()">Cancelar</button>
+      <button class="btn-save" id="btn-baixar-lote" onclick="confirmarBaixarLote()">Baixar selecionados</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL SENHA -->
 <div class="modal-overlay" id="modal-senha" style="display:none" onclick="if(event.target===this)fecharSenha()">
   <div class="modal modal-sm">
@@ -524,7 +578,7 @@ const CLIENT_ID = '280202090756-sso0acjcirg3j9537dpfvp9eauh97od4.apps.googleuser
 const SENHA = '307307';
 
 let rows = [];
-let currentFilter = 'all';
+let currentFilters = []; // array vazio = "Todos"
 let currentEnvioFilter = 'all';
 let currentEditRow = null;
 let selectedStatus = null;
@@ -548,13 +602,13 @@ function toast(msg, type='', dur=3000) {
 function parseBRL(v) {
   if (v === null || v === undefined || v === '') return NaN;
   const s = v.toString().replace(/R\$\s*/g,'').trim();
-  // Detecta formato: se tem vírgula é BR (1.234,56), se só tem ponto é número puro (1234.56)
+  if (s === '' || s === '-') return NaN;
   if (s.includes(',')) {
-    // Formato BR: remove pontos de milhar, troca vírgula por ponto
+    // Formato BR: 1.234,56 → remove pontos de milhar, troca vírgula por ponto decimal
     return parseFloat(s.replace(/\./g,'').replace(',','.'));
   } else {
-    // Número puro americano ou sem decimal
-    return parseFloat(s.replace(/\./g,''));
+    // Número já em formato americano/puro: 1234.56 ou 1234 — NÃO remover o ponto
+    return parseFloat(s);
   }
 }
 function fmt(v) {
@@ -621,14 +675,41 @@ function sortBy(col) {
 
 // ── FILTER ──
 function setFilter(f, btn, type) {
-  if (type === 'status') {
-    currentFilter = f;
-    document.querySelectorAll('#chips-status .chip').forEach(c => c.classList.remove('active'));
-  } else {
+  if (type === 'envio') {
     currentEnvioFilter = f;
     document.querySelectorAll('#chips-envio .chip').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+  } else {
+    // Multi-select de status
+    if (f === 'all') {
+      // "Todos" limpa qualquer seleção
+      currentFilters = [];
+      document.querySelectorAll('#chips-status .chip').forEach(c => c.classList.remove('active'));
+      document.querySelector('#chips-status .chip.all').classList.add('active');
+    } else {
+      // Toggle do filtro clicado
+      const idx = currentFilters.indexOf(f);
+      if (idx >= 0) {
+        currentFilters.splice(idx, 1);
+      } else {
+        currentFilters.push(f);
+      }
+      // Atualiza visual
+      document.querySelectorAll('#chips-status .chip').forEach(c => c.classList.remove('active'));
+      if (currentFilters.length === 0) {
+        document.querySelector('#chips-status .chip.all').classList.add('active');
+      } else {
+        currentFilters.forEach(filter => {
+          const map = {
+            'AGUARDANDO': 'ag', 'COMPROVANTE': 'cp',
+            'CONFIRMADO': 'cf', 'BAIXADO': 'bx', 'SEMSTATUS': 'ss'
+          };
+          const cls = map[filter];
+          document.querySelectorAll(`#chips-status .chip.${cls}`).forEach(c => c.classList.add('active'));
+        });
+      }
+    }
   }
-  btn.classList.add('active');
   renderTable();
 }
 
@@ -640,11 +721,18 @@ function renderTable() {
 
   let filtered = data.filter(r => {
     const s = (r[11]||'').toUpperCase();
-    if (currentFilter==='AGUARDANDO' && !s.includes('AGUARD')) return false;
-    if (currentFilter==='COMPROVANTE' && !s.includes('COMPROV')) return false;
-    if (currentFilter==='CONFIRMADO' && !s.includes('CONFIRM')) return false;
-    if (currentFilter==='BAIXADO' && (s.includes('AGUARD')||s.includes('COMPROV')||s.includes('CONFIRM'))) return false;
-    if (currentFilter==='SEMSTATUS' && s.trim() !== '') return false;
+    // Filtro de status multi-select
+    if (currentFilters.length > 0) {
+      const matches = currentFilters.some(f => {
+        if (f === 'AGUARDANDO') return s.includes('AGUARD');
+        if (f === 'COMPROVANTE') return s.includes('COMPROV');
+        if (f === 'CONFIRMADO') return s.includes('CONFIRM');
+        if (f === 'BAIXADO') return s === 'BAIXADO';
+        if (f === 'SEMSTATUS') return s.trim() === '';
+        return false;
+      });
+      if (!matches) return false;
+    }
     const ek = envKey(r[15]);
     if (currentEnvioFilter==='MANDAE' && ek!=='M') return false;
     if (currentEnvioFilter==='TAXI' && ek!=='T') return false;
@@ -717,7 +805,7 @@ function updateStats() {
   const cnt = key => data.filter(r => statusKey(r[11])===key).length;
   const sum = key => data.filter(r => statusKey(r[11])===key && r[0] && r[1] && r[2] && r[1].toString().trim() !== '').reduce((a,r) => {
     const v = parseBRL(r[9]);
-    return a + (isNaN(v) || v > 9999999 ? 0 : v);
+    return a + (isNaN(v) ? 0 : v);
   }, 0);
   document.getElementById('cnt-ag').textContent = cnt('ag');
   document.getElementById('cnt-cp').textContent = cnt('cp');
@@ -961,6 +1049,66 @@ function onConnected() {
   loadSheetData();
   if (syncInterval) clearInterval(syncInterval);
   syncInterval=setInterval(()=>{ if(accessToken&&Date.now()<tokenExpiry) loadSheetData(); else clearInterval(syncInterval); },30000);
+}
+
+// ── MODAL BAIXAR EM LOTE ──
+function openModalLote() {
+  if (!accessToken) { toast('Conecte a planilha primeiro', 'error'); return; }
+  const confirmados = rows.slice(1).map((r, i) => ({ r, idx: i+1 }))
+    .filter(({ r }) => (r[11]||'').toUpperCase().includes('CONFIRM'));
+  if (!confirmados.length) {
+    toast('Nenhum pedido com status Confirmado para baixar.', 'error');
+    return;
+  }
+  document.getElementById('lote-dtpagto').value = new Date().toISOString().split('T')[0];
+  const container = document.getElementById('lote-items');
+  container.innerHTML = confirmados.map(({ r, idx }) => `
+    <div class="lote-item" onclick="toggleLoteItem(this)">
+      <input type="checkbox" class="lote-chk" data-rowidx="${idx}" onclick="event.stopPropagation();atualizarContador()"/>
+      <span class="li-pedido">${r[1]||'—'}</span>
+      <span class="li-cliente">${r[2]||'—'}</span>
+      <span class="li-total">${fmt(r[9])}</span>
+    </div>
+  `).join('');
+  document.getElementById('lote-chk-all').checked = false;
+  atualizarContador();
+  document.getElementById('modal-lote').style.display = 'flex';
+}
+function closeModalLote() { document.getElementById('modal-lote').style.display = 'none'; }
+function toggleLoteItem(el) { const chk = el.querySelector('input[type=checkbox]'); chk.checked = !chk.checked; atualizarContador(); }
+function toggleLoteTodos(checked) { document.querySelectorAll('.lote-chk').forEach(c => c.checked = checked); atualizarContador(); }
+function atualizarContador() {
+  const n = document.querySelectorAll('.lote-chk:checked').length;
+  document.getElementById('lote-counter').textContent = n + ' pedido' + (n!==1?'s':'') + ' selecionado' + (n!==1?'s':'');
+  const total = document.querySelectorAll('.lote-chk').length;
+  document.getElementById('lote-chk-all').checked = total > 0 && n === total;
+}
+async function confirmarBaixarLote() {
+  const selecionados = [...document.querySelectorAll('.lote-chk:checked')];
+  if (!selecionados.length) { toast('Selecione pelo menos um pedido'); return; }
+  const dtVal = document.getElementById('lote-dtpagto').value;
+  if (!dtVal) { toast('Informe a data de pagamento'); return; }
+  const [y,m,d] = dtVal.split('-');
+  const dtFmt = `${d}/${m}/${y}`;
+  const btn = document.getElementById('btn-baixar-lote');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  try {
+    const updates = [];
+    selecionados.forEach(chk => {
+      const rowIdx = parseInt(chk.dataset.rowidx);
+      updates.push({ range: `${SHEET_NAME}!L${rowIdx}`, values: [['BAIXADO']] });
+      updates.push({ range: `${SHEET_NAME}!M${rowIdx}`, values: [[dtFmt]] });
+      rows[rowIdx-1][11] = 'BAIXADO';
+      rows[rowIdx-1][12] = dtFmt;
+    });
+    await apiBatch(updates);
+    updateStats(); renderTable(); closeModalLote();
+    toast(`${selecionados.length} pedido(s) baixado(s)!`, 'success');
+  } catch(e) {
+    toast('Erro: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Baixar selecionados';
+  }
 }
 
 renderTable();
