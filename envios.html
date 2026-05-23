@@ -854,6 +854,8 @@ function handleAuth() {
         const hash = new URLSearchParams(popup.location.hash.slice(1));
         accessToken = hash.get('access_token');
         tokenExpiry = Date.now() + parseInt(hash.get('expires_in')||'3600')*1000;
+        sessionStorage.setItem('afife_token', accessToken);
+        sessionStorage.setItem('afife_token_expiry', String(tokenExpiry));
         popup.close(); clearInterval(check);
         document.getElementById('btn-auth').classList.add('connected');
         document.getElementById('auth-label').textContent = 'Conectado';
@@ -1282,6 +1284,20 @@ async function rastrearModal(codigo, pedido, cliente) {
 function closeModalRastreio() { document.getElementById('modal-rastreio').style.display = 'none'; }
 
 // ── INIT ──
+// ── AUTO-RESTORE SESSION ──
+(function() {
+  const saved  = sessionStorage.getItem('afife_token');
+  const expiry = parseInt(sessionStorage.getItem('afife_token_expiry') || '0');
+  if (saved && Date.now() < expiry) {
+    accessToken = saved;
+    tokenExpiry = expiry;
+    document.getElementById('btn-auth').classList.add('connected');
+    document.getElementById('auth-label').textContent = 'Conectado';
+    document.getElementById('sync-dot').classList.add('on');
+    loadSheetData();
+  }
+})();
+
 renderHistorico();
 </script>
 </body>

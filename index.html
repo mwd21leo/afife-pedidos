@@ -66,6 +66,15 @@ body { font-family: 'Nunito', sans-serif; background: var(--gray-50); color: var
 }
 .btn-novo-top:hover { background: #ede022; transform: translateY(-1px); }
 .btn-novo-top svg { width: 14px; height: 14px; }
+.btn-config-top {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 14px; border-radius: var(--radius-md);
+  background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
+  color: var(--white); font-size: 12px; font-weight: 700; cursor: pointer;
+  transition: all 0.15s; font-family: 'Nunito', sans-serif; white-space: nowrap;
+}
+.btn-config-top:hover { background: rgba(255,255,255,0.25); }
+.btn-config-top.active { background: rgba(245,230,66,0.2); border-color: rgba(245,230,66,0.5); color: var(--yellow); }
 .nav-tabs { display: flex; gap: 4px; }
 .nav-tab {
   padding: 6px 14px; border-radius: var(--radius-md);
@@ -311,6 +320,7 @@ tbody td { padding: 10px 12px; font-size: 12px; font-weight: 600; color: var(--t
       <span class="logo-star">⭐</span>
     </div>
     <div class="logo-div"></div>
+    <div class="page-title">Gestão de <span>Pedidos</span></div>
     <nav class="nav-tabs">
       <a class="nav-tab active" href="index.html">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"/></svg>
@@ -321,12 +331,13 @@ tbody td { padding: 10px 12px; font-size: 12px; font-weight: 600; color: var(--t
         Envios
       </a>
     </nav>
-    <div class="sync-info" id="sync-info">Não conectado</div>
-    <button class="btn-refresh" onclick="loadSheetData()" title="Atualizar">
-      <svg id="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v5h5M20 20v-5h-5"/><path d="M4 9a8 8 0 0 1 14.93-2M20 15a8 8 0 0 1-14.93 2"/></svg>
+    <button class="btn-config-top" id="btn-sync-info" onclick="loadSheetData()" title="Atualizar dados">
+      <svg id="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M4 4v5h5M20 20v-5h-5"/><path d="M4 9a8 8 0 0 1 14.93-2M20 15a8 8 0 0 1-14.93 2"/></svg>
+      <span id="sync-info">Atualizar</span>
     </button>
-    <button class="btn-refresh" id="btn-toggle-valores" onclick="toggleValores()" title="Ver/ocultar valores" style="gap:4px">
-      <svg id="icon-olho" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+    <button class="btn-config-top" id="btn-toggle-valores" onclick="toggleValores()" title="Ver/ocultar valores">
+      <svg id="icon-olho" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      Valores
     </button>
     <button class="btn-auth-top" id="btn-auth" onclick="handleAuth()">
       <div class="sync-dot" id="sync-dot"></div>
@@ -941,7 +952,7 @@ async function loadSheetData() {
     rows = data.values || [];
     updateStats(); renderTable();
     const now = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-    document.getElementById('sync-info').textContent = 'Atualizado às '+now;
+    document.getElementById('sync-info').textContent = '↻ ' + now;
   } catch(e) { toast('Erro ao carregar: '+e.message,'error'); }
   finally { document.getElementById('refresh-icon').classList.remove('spinning'); }
 }
@@ -1094,6 +1105,8 @@ function handleAuth() {
         const hash=new URLSearchParams(popup.location.hash.slice(1));
         accessToken=hash.get('access_token');
         tokenExpiry=Date.now()+parseInt(hash.get('expires_in')||'3600')*1000;
+        sessionStorage.setItem('afife_token', accessToken);
+        sessionStorage.setItem('afife_token_expiry', String(tokenExpiry));
         popup.close(); clearInterval(check); onConnected();
       }
     } catch(e){}
@@ -1133,6 +1146,8 @@ function silentRenew() {
         if (token) {
           accessToken = token;
           tokenExpiry = Date.now() + parseInt(hash.get('expires_in') || '3600') * 1000;
+          sessionStorage.setItem('afife_token', accessToken);
+          sessionStorage.setItem('afife_token_expiry', String(tokenExpiry));
           clearTimeout(timeout); done = true; iframe.remove();
           resolve(token);
         } else {
@@ -1168,6 +1183,8 @@ function onConnected() {
         // Só pede login manual se o token já expirou de fato
         if (Date.now() >= tokenExpiry) {
           accessToken = null;
+          sessionStorage.removeItem('afife_token');
+          sessionStorage.removeItem('afife_token_expiry');
           document.getElementById('btn-auth').classList.remove('connected');
           document.getElementById('auth-label').textContent = 'Reconectar';
           document.getElementById('sync-dot').classList.remove('on');
@@ -1237,6 +1254,17 @@ async function confirmarBaixarLote() {
     btn.disabled = false; btn.textContent = 'Baixar selecionados';
   }
 }
+
+// ── AUTO-RESTORE SESSION ──
+(function() {
+  const saved  = sessionStorage.getItem('afife_token');
+  const expiry = parseInt(sessionStorage.getItem('afife_token_expiry') || '0');
+  if (saved && Date.now() < expiry) {
+    accessToken  = saved;
+    tokenExpiry  = expiry;
+    onConnected();
+  }
+})();
 
 renderTable();
 </script>
