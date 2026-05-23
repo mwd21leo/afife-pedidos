@@ -728,9 +728,9 @@ const CLIENT_ID  = localStorage.getItem('afife_client_id')  || '280202090756-sso
 const SHEET_NAME = 'Página1';
 const SCOPES     = 'https://www.googleapis.com/auth/spreadsheets';
 
-let N8N_COTAR    = localStorage.getItem('afife_n8n_cotar')    || '';
-let N8N_ETIQUETA = localStorage.getItem('afife_n8n_etiqueta') || '';
-let N8N_RASTREAR = localStorage.getItem('afife_n8n_rastrear') || '';
+let N8N_COTAR    = localStorage.getItem('afife_n8n_cotar')    || 'https://www.afifeautomacao.com.br/webhook/mandae-cotar';
+let N8N_ETIQUETA = localStorage.getItem('afife_n8n_etiqueta') || 'https://www.afifeautomacao.com.br/webhook/mandae-etiqueta';
+let N8N_RASTREAR = localStorage.getItem('afife_n8n_rastrear') || 'https://www.afifeautomacao.com.br/webhook/mandae-rastrear';
 let N8N_HISTORICO= localStorage.getItem('afife_n8n_historico')|| '';
 
 let accessToken  = null;
@@ -831,6 +831,15 @@ function salvarConfig() {
     document.getElementById('config-label').textContent = 'n8n Configurado ✓';
   }
 })();
+
+// Pré-preenche campos de config com as URLs padrão
+document.addEventListener('DOMContentLoaded', function() {
+  if (!localStorage.getItem('afife_n8n_cotar')) {
+    localStorage.setItem('afife_n8n_cotar', N8N_COTAR);
+    localStorage.setItem('afife_n8n_etiqueta', N8N_ETIQUETA);
+    localStorage.setItem('afife_n8n_rastrear', N8N_RASTREAR);
+  }
+});;
 
 // ── AUTH GOOGLE ──
 function handleAuth() {
